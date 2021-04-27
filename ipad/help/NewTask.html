@@ -1,0 +1,47 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NewTask</title>
+    <style>
+        h1{background-color:DeepSkyBlue;color:white;text-align:center;font-family:New Times Roman;}
+    </style>
+</head>
+<body>
+	<h1>Create a New Task</h1>
+	<p>To create a new requirement, click "New Task".</p>
+	<h2><a name="C1">Fill out task contents</a></h2>
+	<p>To guarantee a task can be fully implemented, provide as detailed contents as possible. Multiple stations can be filled out here. For more information about the meaning of product, project, stage, station, requestor, DRI, priority, task title, and ETA, please refer to "Task Contents".</p>
+	<h2><a name="C2">Task distribution</a></h2>
+	<p>Decide the person to handle the task. Choose department first, and then choose DRI for each station.</p> 
+	<h2><a name="C3">Upload files</a></h2>
+	<p>To guarantee a task can be thoroughly understood, add necessary referencing files. Click "Delete" button to remove unnecessary files.</p>
+	<h2><a name="C4">Synchronization</a></h2>
+	<p>
+		Synchronizing function is used to synchronize similar tasks for different projects, builds, or stations. Just select the other task's project name, stage name, station name, and station DRI, then the task's priority, ETA and other details will be synchronized automatically.
+	</p>
+</body>
+</html>

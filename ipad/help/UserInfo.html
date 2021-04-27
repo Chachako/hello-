@@ -1,0 +1,44 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>UserInfo</title>
+    <style>
+        h1{background-color:DeepSkyBlue;color:white;text-align:center;font-family:New Times Roman;}
+    </style>
+</head>
+<body>
+	<h1>Update basic information</h1>
+	<h2><a name="U1">Update user information</a></h2>
+	<p>To update phone number or email address, click the account name, and then click "User Information".</p>
+	<h2><a name="U2">Change password</a></h2>
+	<p>To change password, click the account name, and then click "Change Password".</p>
+	<h1><a name="U3">Set Login Appearance</a></h1>
+	<p>
+		To set the appearance of task table after logging in, click the account name, and then choose "Preferences". Based on the settings, the task table will be refreshed automatically after logging in. Product name, project name(i.e. product code), and stage(i.e. build phase) are available to be set here.
+	</p>
+</body>
+</html>

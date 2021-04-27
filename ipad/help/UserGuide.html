@@ -1,0 +1,48 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>UserGuide</title>
+	<style>
+	p{font-size:20px;}
+	h1{background-color:DeepSkyBlue;color:white;text-align:center;font-family:New Times Roman;}
+	</style>
+</head>
+<body>
+	<h1>User Guide</h1>
+	<p>
+		TeamEase system is designed to manage the process of test station Overlay development. The goal of TeamEase is to provide a service platform for F1 and FX TDL, SW, HW to collaborate and solve test station related issues systematically and efficiently.
+	</p>
+	<br />
+	<h1>System Feature</h1>
+	<h2><a name="G1">Assignment distribution and cooperation</a></h2>
+	<p>Improve the collaboration within HWTE group; provide timely communication and feedback; and record every work step.</p>
+	<h2><a name="G2">Record search and browse</a></h2>
+	<p>Quickly find the status of concerned tasks; clearly show the detailed flow of each one.</p> 
+	<h2><a name="G3">Data analysis and report</a></h2>
+	<p>Form statistical data from numerous task records; create and export practical report for further analysis.</p>
+</body>
+</html>

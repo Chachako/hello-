@@ -1,0 +1,833 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+    echo "<script>document.URL='../inedex.html'</script>";
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>add_build</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/soulTable.css">
+    <style>
+        /* .boxright{
+            float:right; 
+        } */
+        .box{
+            width:100%;
+        }
+        .alltaskwrap{
+            /*width:88%!important;*/
+            /*margin:0 auto!important;*/
+            margin-left:6%;
+            margin-right:6%;
+            /*min-width:1760px;*/
+        }
+        #test{
+            display: none;
+        }
+        #allTable{
+            /*width:80%;*/
+            margin:0 auto!important;
+        }
+        .user_list_wrap{
+            width:80%;
+            margin:0 auto;
+        }
+        .layui-table, .layui-table-view {
+            margin: 0px auto;
+        }
+        .filterwrap{
+            display: inline-block
+        }
+        .alltask,.mytask,.test{
+            margin-top:-60px
+        }
+        .task_bar{
+            margin-left:6%;
+            margin-top:20px;
+            /* margin-top:60px; */
+			min-width:1680px;
+            white-space: nowrap;
+        }
+        .layui-badge-dot{
+            width:12px;
+            height:12px;
+            margin-top:5px;
+            margin-right:5px;
+        }
+        .layui-bg-green {
+            background-color: green!important;
+       }
+       .layui-btn-group {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 0;
+            margin-top: -60px;
+        }
+        .status_title{
+            display: inline-block;
+            margin-right:10px;
+            color:#888;
+            font-size: 12px;
+            position:relative;
+            top:-5px;
+        }
+        .layui-badge-dot{
+            width:20px;
+            height:20px;
+            cursor: default;
+        }
+        .layui-bg-gray {
+            background-color: #a3a2a2 !important;
+            color: #666 !important;
+        }
+
+        .layui-table>tbody>tr :hover{
+            cursor:pointer;
+        }
+        .sizefont {
+            font-size: 20px;
+           color: #1E9FFF;
+        } 
+        #xm_station,#xm_stage{
+              display: none;
+        }
+        /* .group_list {
+            display: none;
+        } */
+    </style>
+</head>
+
+<body>
+
+    <div class="x-body">
+        <div class='task_bar'>
+            <button class="layui-btn layui-btn-normal alltask " id="alltask">All Task</button>
+            <button class="layui-btn layui-btn-primary mytask"  id="mytask" >My Task</button> <!-- onclick="Clicked()" -->
+            <!-- <button class="layui-btn layui-btn-primary test" id="test"   >test</button> -->
+            <div class="layui-btn-group" style="margin-left:20px;" >
+                <span class="layui-badge-dot layui-bg-orange ongoing_task"></span><span class='status_title' id="ong" >On-going</span>
+                <span class="layui-badge-dot block_task"></span><span class='status_title'  id="blc" >Block</span>
+                <span class="layui-badge-dot layui-bg-gray cancel_task"></span><span class='status_title' id="can" >Cancel</span>
+                <span class="layui-badge-dot layui-bg-green done_task"></span><span class='status_title' id="do" >Done</span>
+            </div>
+            <div class="filterwrap" style='margin-top:10px;margin-left: 50px;'>
+                <form class="layui-form" action="">
+                    <div class="layui-form-item" >
+                        <div class="layui-input-inline"  >
+                            <select name="filter-setting" lay-verify="required" class='filter-setting' lay-filter="filter_setting" >
+                                <option value="" >Select Filter</option>
+                            </select>
+                        </div>
+                        <div class="layui-input-inline" style="width: 270px">
+                            <div id="xm_stage" class="xm-select-demo"></div>
+                        </div>
+                        <div class="layui-input-inline" style="width: 270px">
+                            <div id="xm_station" class="xm-select-demo"></div>
+                        </div>
+                        <!-- <div style="float: left;" >
+                            <div class="stage_list"></div>
+                        </div> -->
+                        <div class="layui-input-inline" style="width: 600px;margin-left: 50px;">
+                            <div class="group_list"></div>
+                        </div>
+                        
+                        <!-- <div style="float:right; text-align:right">
+                            <input type="text" name="title" required lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                            <button class=" alltask ">All Task</button>
+                        </div> -->
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="alltaskwrap">
+            <table id="allTable" lay-filter="alltasktr"></table>
+        </div>
+    </div>
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script src='../layui/x-layui.js'></script>
+    <script type="text/javascript">
+  
+        //加载组件
+        var with_screen = screen.width*0.88 
+        $(".alltaskwrap").css("min-width",with_screen);
+
+            layui.config({
+                base: '../js/'
+            }).extend({
+                xmSelect: 'xm-select'
+            }).use(['element', 'table', 'form', 'jquery', 'layer', 'laypage', 'xmSelect','soulTable'], function () {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+            var xmSelect = layui.xmSelect;
+            var soulTable=layui.soulTable;
+
+            var sessionFilter = layui.sessionData('filter');
+            $(".mytask").click(function () {
+              
+                 $('.filter-setting').next().find('.layui-input').val(''); 
+                // $('.filter-setting').next().find('.layui-input').css('background-color',''); 
+                $(".mytask").addClass("layui-btn-normal");
+                $(".mytask").removeClass("layui-btn-primary ");
+                $(".alltask").addClass("layui-btn-primary");
+                $(".alltask").removeClass("layui-btn-normal ");
+
+                var arr = xm_stage.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                  array[x] = arr[x].value
+                }
+                stageId = array.join("|");
+                // console.log(stageId);
+                var arr = xm_station.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                  array[x] = arr[x].value
+                }
+                stationId = array.join("|");
+                // console.log(stationId);
+                depId = $("[name='group_list1']:checked").val();
+                // console.log(depId);
+                table.reload('allTable', {
+                    url: 'search.php?action=search_my_task',
+                    method: 'get',
+                    where: {
+                        stageId: stageId,
+                        stationId: stationId,
+                        depId: depId
+                    },
+                    page: {
+                        curr: 1
+                    }
+                })
+                soulTable.clearFilter(mytable.config);
+            })
+            
+            $(".alltask").click(function () {
+               
+                $(".alltask").addClass("layui-btn-normal");
+                $(".alltask").removeClass("layui-btn-primary ");
+                $(".mytask").addClass("layui-btn-primary");
+                $(".mytask").removeClass("layui-btn-normal ");
+                
+               
+                var arr = xm_stage.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                  array[x] = arr[x].value
+                }
+                stageId = array.join("|");
+                // console.log(stageId);
+                var arr = xm_station.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                  array[x] = arr[x].value
+                }
+                stationId = array.join("|");
+                // console.log(stationId);
+                depId = $("[name='group_list1']:checked").val();
+                table.reload('allTable', {
+                    url: 'search.php?action=search_all_task',
+                    method: 'get',
+                    where: {
+                        stageId: stageId,
+                        stationId: stationId,
+                        depId: depId
+                    },
+                    page: {
+                        curr: 1
+                    }
+                })
+                soulTable.clearFilter(mytable.config);
+            })
+
+            //渲染filter
+            $.ajax({
+                url: './filter_handle.php?action=get_filter_list',
+                type: 'get',
+                dataType: 'json',
+                success: function (res) {
+                    var filterstr = "";
+                    if (res['data']) {
+                        for (var i = 0; i < res['data'].length; i++) {
+                            filterstr = "<option value='" + res['data'][i]['id'] + "'>" + res[
+                            'data'][i]['filter_name'] + "</option>"
+                            $('.filter-setting').append(filterstr);
+                        }
+                        if (undefined != sessionFilter.filter){
+                            id=sessionFilter.filter.filter_id
+                            $(".filter-setting option[value='"+id+"']").prop("selected","selected");
+                        }
+                        form.render('select')
+                    }
+                }
+            })
+            //选择条件查询
+            form.on('select(filter_setting)', function (data) {
+                $(".mytask").addClass("layui-btn-primary");
+                $(".mytask").removeClass("layui-btn-normal ");
+                $(".alltask").addClass("layui-btn-primary");
+                $(".alltask").removeClass("layui-btn-normal ");
+                // var a=document.getElementById('filter').innerHTML;
+                //  console.log(a);
+                var filter_id = data.value
+                var arr = xm_stage.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                  array[x] = arr[x].value
+                }
+                stageId = array.join("|");
+                depId = $("[name='group_list1']:checked").val();
+                table.reload('allTable', {
+                    url: './task_handle.php?action=task_filter_list',
+                    method: 'post',
+                    where: {
+                        filterId: filter_id,
+                        stageId: stageId,
+                        depId: depId
+                    },
+                    // 设置重新从第一页开始读取
+                    page: {
+                        curr: 1
+                    }
+                })
+
+
+            });
+
+            //渲染多选
+            var xm_stage = xmSelect.render({
+                el: '#xm_stage',
+                language: 'en',
+                tips: 'Select Stage', 
+                filterable: true,
+                model: {
+                    label: {
+                        type: 'block',
+                        block: {
+                            //最大显示数量, 0:不限制
+                            showCount: 2,
+                            //是否显示删除图标
+                            showIcon: true,
+                        }
+                    }
+                },
+                filterMethod: function(val, item, index, prop){
+                    if(val == item.value){//把value相同的搜索出来
+                        return true;
+                    }
+                    if(item.name.indexOf(val.toUpperCase()) != -1){//名称中包含的搜索出来
+                        return true;
+                    }
+                    return false;//不知道的就不管了
+                },
+                toolbar: {
+                    show: true,
+                    list: [ 'ALL', 'CLEAR', 'REVERSE' ]
+                },
+                data: [],
+            })
+
+            var xm_station = xmSelect.render({
+                el: '#xm_station',
+                language: 'en',
+                tips: 'Select Station', 
+                filterable: true,
+                model: {
+                    label: {
+                        type: 'block',
+                        block: {
+                            //最大显示数量, 0:不限制
+                            showCount: 2,
+                            //是否显示删除图标
+                            showIcon: true,
+                        }
+                    }
+                },
+                filterMethod: function(val, item, index, prop){
+                    if(val == item.value){//把value相同的搜索出来
+                        return true;
+                    }
+                    if(item.name.indexOf(val.toUpperCase()) != -1){//名称中包含的搜索出来
+                        return true;
+                    }
+                    return false;//不知道的就不管了
+                },
+                toolbar: {
+                    show: true,
+                    list: [ 'ALL', 'CLEAR', 'REVERSE' ]
+                },
+                data: [],
+            })
+
+            $.ajax({
+                url: './task_handle.php?action=get_stage_station_list',
+                type: 'post',
+                dataType: 'json',
+                success: function (res) {
+                    // console.log(res);
+                    xm_stage.update({
+                        data: res['stage'],
+                        on({ arr, change, isAdd }){
+                            // alert(`已有: ${arr.length} 变化: ${change.length}, 状态: ${isAdd}`) 
+                            var array = new Array();
+                            for (x in arr)
+                            {
+                                array[x] = arr[x].value
+                            }
+                            stageId = array.join("|");
+                            // console.log(stageId);
+                            var arr = xm_station.getValue();
+                            var array = new Array();
+                            for (x in arr)
+                            {
+                              array[x] = arr[x].value
+                            }
+                            stationId = array.join("|");
+                            // console.log(stationId);
+                            depId = $("[name='group_list1']:checked").val();
+
+                            var isong = $("#ong").hasClass("sizefont");
+                            var isblc = $("#blc").hasClass("sizefont");
+                            var iscan = $("#can").hasClass("sizefont");
+                            var isdo = $("#do").hasClass("sizefont");
+                            var ismytask = $(".mytask").hasClass("layui-btn-normal");
+                            var isalltask = $(".alltask").hasClass("layui-btn-normal");
+                            if(isalltask == true){
+                                skip_url = 'search_all_task'                    
+                            }else if(ismytask == true){
+                                skip_url = 'search_my_task'
+                            }else if(isong == true){
+                                skip_url = 'search_ongoing_task'
+                            }else if(isblc == true){
+                                skip_url = 'search_block_task'
+                            }else if(iscan == true){
+                                skip_url = 'search_cancel_task'
+                            }else if(isdo == true){
+                                skip_url = 'search_done_task'
+                            }else{
+                                $('.filter-setting').next().find('.layui-input').val('');
+                                $(".alltask").addClass("layui-btn-normal");
+                                $(".alltask").removeClass("layui-btn-primary");
+
+                                skip_url = 'search_all_task'
+                            }
+                            table.reload('allTable', {
+                                url: 'search.php?action='+skip_url,
+                                method: 'get',
+                                where: {
+                                    stageId: stageId,
+                                    stationId: stationId,
+                                    depId: depId
+                                },
+                                page: {
+                                    curr: 1
+                                }
+                            })
+                        },
+                    });
+                    xm_station.update({
+                        data: res['station'],
+                        on({ arr, change, isAdd }){
+                            // alert(`已有: ${arr.length} 变化: ${change.length}, 状态: ${isAdd}`) 
+                            var arr_stage = xm_stage.getValue();
+                            var array = new Array();
+                            for (x in arr_stage)
+                            {
+                              array[x] = arr_stage[x].value
+                            }
+                            stageId = array.join("|");
+                            // console.log(stageId);
+                            var array = new Array();
+                            for (x in arr)
+                            {
+                                array[x] = arr[x].value
+                            }
+                            stationId = array.join("|");
+                            // console.log(stationId);
+                            depId = $("[name='group_list1']:checked").val();
+
+                            var isong = $("#ong").hasClass("sizefont");
+                            var isblc = $("#blc").hasClass("sizefont");
+                            var iscan = $("#can").hasClass("sizefont");
+                            var isdo = $("#do").hasClass("sizefont");
+                            var ismytask = $(".mytask").hasClass("layui-btn-normal");
+                            var isalltask = $(".alltask").hasClass("layui-btn-normal");
+
+                            if(isalltask == true){
+                                skip_url = 'search_all_task'                    
+                            }else if(ismytask == true){
+                                skip_url = 'search_my_task'
+                            }else if(isong == true){
+                                skip_url = 'search_ongoing_task'
+                            }else if(isblc == true){
+                                skip_url = 'search_block_task'
+                            }else if(iscan == true){
+                                skip_url = 'search_cancel_task'
+                            }else if(isdo == true){
+                                skip_url = 'search_done_task'
+                            }else{
+                                $('.filter-setting').next().find('.layui-input').val('');
+                                $(".alltask").addClass("layui-btn-normal");
+                                $(".alltask").removeClass("layui-btn-primary");
+
+                                skip_url = 'search_all_task'
+                            }
+                            table.reload('allTable', {
+                                url: 'search.php?action='+skip_url,
+                                method: 'get',
+                                where: {
+                                    stageId: stageId,
+                                    stationId: stationId,
+                                    depId: depId
+                                },
+                                page: {
+                                    curr: 1
+                                }
+                            })
+                        },
+                    })
+                }
+            });
+
+            $.ajax({
+                url: './task_handle.php?action=get_group_list',
+                type: 'post',
+                dataType: 'json',
+                success: function (res) {
+                    var assignstr = "";
+                    // console.log(res);
+                    for (var k = 0; k < res.length; k++) {
+                        assignstr = "";
+                        if(res[k]['checked'] == 0)
+                            assignstr += "<input type='radio' lay-filter='group_list1' name='group_list1' value='" + res[k]['id'] + "' title='" + res[k]['group'] +"''>"
+                        else
+                            assignstr += "<input type='radio' lay-filter='group_list1' name='group_list1' checked='checked' value='" + res[k]['id'] + "' title='" + res[k]['group'] +"''>"
+                        // console.log(assignstr);
+                        $(".group_list").append(assignstr);
+                    }
+                    form.render("radio");
+                }
+            })
+
+            form.on('radio(group_list1)', function (data) {
+                var isong = $("#ong").hasClass("sizefont");
+                var isblc = $("#blc").hasClass("sizefont");
+                var iscan = $("#can").hasClass("sizefont");
+                var isdo = $("#do").hasClass("sizefont");
+                var ismytask = $(".mytask").hasClass("layui-btn-normal");
+                var isalltask = $(".alltask").hasClass("layui-btn-normal");
+
+                var arr = xm_stage.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                  array[x] = arr[x].value
+                }
+                stageId = array.join("|");
+                // console.log(stageId);
+                depId = $("[name='group_list1']:checked").val();
+                // console.log(depId);
+
+                if(isalltask == true){
+                    skip_url = 'search_all_task'
+                }else if(ismytask == true){
+                    skip_url = 'search_my_task'
+                }else if(isong == true){
+                    skip_url = 'search_ongoing_task'
+                }else if(isblc == true){
+                    skip_url = 'search_block_task'
+                }else if(iscan == true){
+                    skip_url = 'search_cancel_task'
+                }else if(isdo == true){
+                    skip_url = 'search_done_task'
+                }else{
+                    $('.filter-setting').next().find('.layui-input').val('');
+                    $(".alltask").addClass("layui-btn-normal");
+                    $(".alltask").removeClass("layui-btn-primary");
+
+                    skip_url = 'search_all_task'
+                }
+                table.reload('allTable', {
+                    url: 'search.php?action='+skip_url,
+                    method: 'get',
+                    where: {
+                        stageId: stageId,
+                        depId: depId
+                    },
+                    page: {
+                        curr: 1
+                    }
+                })
+            })
+            var mytable=table.render({
+                elem: '#allTable',
+                url: 'task_handle.php?action=task_all_list1', //数据接口
+                id: 'allTable',
+                autoSort: false,
+                height: 'full-200',
+                align: 'right',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 40, 60],
+                method: 'post',
+                where: {
+                    choose: 'setting'
+                },
+                cols: [
+                    [{
+                            field: 'no',
+                            align: 'center',
+                            title: 'No.',
+                            templet: '#titleid',
+                            width: 55
+                        },
+                        {
+                            field: 'id',
+                            align: 'center',
+                            title: 'Id',
+                            hide: true
+                        },
+                        {
+                            field: 'product',
+                            align: 'center',
+                            title: 'Product',
+                            sort: true,
+                            // width: 100
+                            hide: true
+                        },
+                        {
+                            field: 'project',
+                            align: 'center',
+                            title: 'Project',
+                            filter:true,
+                            sort: true,
+                            width: 110
+                        },
+                        {
+                            field: 'build',
+                            align: 'center',
+                            title: 'Stage',
+                            filter:true,
+                            sort: true,
+                            width: 100
+                        },
+                        {
+                            field: 'station',
+                            align: 'center',
+                            title: 'Station',
+                            filter:true,
+                            sort: true,
+                            width: 110
+                        },
+                        
+                        {
+                            field: 'task_title',
+                            align: 'center',
+                            title: 'Task',
+                            templet: '#task_title'
+                        },
+                        {
+                            field: 'new_status',
+                            align: 'center',
+                            title: 'Status',
+                            // filter:true,
+                            templet: '#status'
+                        },
+
+                        {
+                            field: 'priority',
+                            align: 'center',
+                            title: 'Priority',
+                            // filter:true,
+                            width: 100
+ 
+                        },
+
+                        {
+                            field: 'toUser',
+                            align: 'center',
+                            title: 'DRI',
+                            filter:true,
+                            sort: true,
+                            width: 125
+                        },
+                         {
+                            field: 'requestor',
+                            align: 'center',
+                            title: 'Requestor',
+                            filter:true,
+                            sort: true,
+                            width: 125
+                        },
+                        {
+                            field: 'eta',
+                            align: 'center',
+                            title: 'ETA',
+                           
+                            templet: '#eta',
+                            filter:false,
+                            sort: true,
+                            width: 200
+                        }
+                    ]
+                ],
+                    done: function() {
+                    soulTable.render(this)
+    }
+            });
+                
+
+
+            //监听排序事件 
+            table.on('sort(alltasktr)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+               // console.log(obj.field); //当前排序的字段名
+               // console.log(obj.type); //当前排序类型：desc（降序）、asc（升序）、null（空对象，默认排序）
+               // console.log(this); //当前排序的 th 对象
+
+                //尽管我们的 table 自带排序功能，但并没有请求服务端。
+                //有些时候，你可能需要根据当前排序的字段，重新向服务端发送请求，从而实现服务端排序，如：
+                table.reload('allTable', {
+                    initSort: obj //记录初始排序，如果不设的话，将无法标记表头的排序状态。
+                    //url: 'task_handle.php?action=task_all_list', //数据接口
+                    ,where: { //请求参数（注意：这里面的参数可任意定义，并非下面固定的格式）
+                        field: obj.field //排序字段
+                        ,order: obj.type //排序方式
+                    }
+                });
+                //layer.msg('服务端排序。order by '+ obj.field + ' ' + obj.type);
+            });
+
+
+            table.on('row(alltasktr)', function (obj) {
+                var scrollTop=0;
+                var layuiTable = $('.layui-table-main');
+                if(layuiTable!=null&&layuiTable.length>0){
+                    scrollTop = layuiTable[0].scrollTop;  
+                }
+                var task_id = obj.data['id']
+                // window.location.href = './detail_task.html?task_id=' + task_id;
+                var url = './detail_task.html?task_id=' + task_id + '&scrollTop=' + scrollTop;
+                x_admin_show('Task', url, '1200', null, scrollTop)
+            });
+
+            // var sessionFilter = layui.sessionData('filter');
+
+            if (undefined != sessionFilter.filter) {
+                // console.log(sessionFilter.filter);
+                $("#ong").removeClass("sizefont");
+                $("#blc").removeClass("sizefont");
+                $("#can").removeClass("sizefont");
+                $("#do").removeClass("sizefont");
+                
+                $(".mytask").addClass("layui-btn-primary");
+                $(".mytask").removeClass("layui-btn-normal ");
+                $(".alltask").addClass("layui-btn-primary");
+                $(".alltask").removeClass("layui-btn-normal ");
+                
+                data = sessionFilter.filter;
+                table.reload('allTable', {
+                    url: './task_handle.php?action=task_filter',
+                    method: 'post',
+                    where: data,
+                    // 设置重新从第一页开始读取
+                    page: {
+                        curr: 1
+                    }
+                })
+
+                // 清空本地session 缓存
+                layui.sessionData('filter', null);
+            }
+        })
+
+        function change(e){
+            var reg=new RegExp('"',"g");
+            return e.replace(reg,'&quot;')
+        }
+        function trim(str){ 
+             return str.replace(/(^\s*)|(\s*$)/g, ""); 
+        }
+        // layui.sessionData('form_value',null);
+    </script>
+    
+    <script type="text/html" id="titleid">
+        {{d.LAY_INDEX}}
+    </script>
+
+    <script type="text/html" id="task_title">
+        <div style='text-align:left;font-size:16px;'><span title="{{change(d.task_description)}}" style='display:block;'>{{ d.task_title }}</span></div>
+    </script>
+
+    <script type="text/html" id="eta">
+
+        {{# var etatime=d.eta; var nowdate=new Date(); var cancel_donetime=d.cancel_done_time;  }}
+        {{# etatime = etatime.replace(/-/g,"/");  }}
+        {{# etatime = new Date(etatime); }}
+        {{# if(null != cancel_donetime){ }}
+        {{#  cancel_donetime = cancel_donetime.replace(/-/g,"/");  }}
+        {{#  cancel_donetime = new Date(cancel_donetime); }}
+        {{# } }}      
+        {{#    if(d.status == 'Ongoing' || d.status=='Block'){ }}
+        {{#       if(etatime < nowdate) { }}
+                    <span style='color:red'>{{ d.eta }}</span>
+        {{#        } else { }}
+                    <span >{{ d.eta }}</span>
+        {{#       }  }}
+        {{#    }else if(d.status=='Cancel' || d.status=='Done'){  }}
+        {{#        if(etatime < cancel_donetime) { }}
+                    <span style='color:red'>{{ d.eta }}</span>
+        {{#        } else { }}
+                    <span >{{ d.eta }}</span>
+        {{#       } }}
+        {{#    }  }}
+    </script>
+    <script type="text/html" id="status">
+        {{#  var status_description; if(d.new_status == '' || d.new_status == null ){ }}
+        {{#  status_description="New Task" } else {  status_description=d.new_status}}}
+        {{#  if(d.status == 'Ongoing'){ }}   
+            <div style='text-align:left;font-size:16px;'><span class='layui-badge-dot layui-bg-orange' style=" width: 12px;  height: 12px;"></span><span >{{ trim(status_description) }}</span></div>
+            {{#  }else if(d.status=='Block'){ }}
+            <div style='text-align:left;font-size:16px;'><span class='layui-badge-dot' style=" width: 12px;  height: 12px;"></span><span>{{ trim(status_description) }}</span></div>
+            {{# } else if(d.status=='Cancel'){ }}
+            <div style='text-align:left;font-size:16px;'><span class='layui-badge-dot layui-bg-gray' style=" width: 12px;  height: 12px;"></span><span>{{ trim(status_description) }}</span></div>
+            {{# } else if(d.status=='Done'){ }}
+            <div style='text-align:left;font-size:16px;'><span class='layui-badge-dot layui-bg-green' style=" width: 12px;  height: 12px;"></span><span>{{ trim(status_description) }}</span></div>
+            {{# } }}
+    </script>
+</body>
+
+</html>

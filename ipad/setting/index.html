@@ -1,0 +1,628 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>setting</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <style>
+        /* 下拉多选样式 需要引用*/
+        
+        select[multiple]+.layui-form-select>.layui-select-title>input.layui-input {
+            border-bottom: 0
+        }
+        
+        select[multiple]+.layui-form-select dd {
+            padding: 0;
+        }
+        
+        select[multiple]+.layui-form-select .layui-form-checkbox[lay-skin=primary] {
+            margin: 0 !important;
+            display: block;
+            line-height: 36px !important;
+            position: relative;
+            padding-left: 26px;
+        }
+        
+        select[multiple]+.layui-form-select .layui-form-checkbox[lay-skin=primary] span {
+            line-height: 36px !important;
+            float: none;
+        }
+        
+        select[multiple]+.layui-form-select .layui-form-checkbox[lay-skin=primary] i {
+            position: absolute;
+            left: 10px;
+            top: 0;
+            margin-top: 9px;
+        }
+        
+        .multiSelect {
+            line-height: normal;
+            height: auto;
+            padding: 4px 10px;
+            overflow: hidden;
+            min-height: 38px;
+            margin-top: -38px;
+            left: 0;
+            z-index: 99;
+            position: relative;
+            background: none;
+        }
+        
+        .multiSelect a {
+            padding: 2px 5px;
+            background: #908e8e;
+            border-radius: 2px;
+            color: #fff;
+            display: block;
+            line-height: 20px;
+            height: 20px;
+            margin: 2px 5px 2px 0;
+            float: left;
+        }
+        
+        .multiSelect a span {
+            float: left;
+        }
+        
+        .multiSelect a i {
+            float: left;
+            display: block;
+            margin: 2px 0 0 2px;
+            border-radius: 2px;
+            width: 8px;
+            height: 8px;
+            padding: 4px;
+            position: relative;
+            -webkit-transition: all .3s;
+            transition: all .3s
+        }
+        
+        .multiSelect a i:before,
+        .multiSelect a i:after {
+            position: absolute;
+            left: 8px;
+            top: 2px;
+            content: '';
+            height: 12px;
+            width: 1px;
+            background-color: #fff
+        }
+        
+        .multiSelect a i:before {
+            -webkit-transform: rotate(45deg);
+            transform: rotate(45deg)
+        }
+        
+        .multiSelect a i:after {
+            -webkit-transform: rotate(-45deg);
+            transform: rotate(-45deg)
+        }
+        
+        .multiSelect a i:hover {
+            background-color: #545556;
+        }
+        
+        .multiOption {
+            display: inline-block;
+            padding: 0 5px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .multiOption:hover {
+            color: #5FB878
+        }
+        
+        @font-face {
+            font-family: "iconfont";
+            src: url('data:application/x-font-woff;charset=utf-8;base64,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') format('woff')
+        }
+        
+        .iconfont {
+            font-family: "iconfont" !important;
+            font-size: 16px;
+            font-style: normal;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .icon-fanxuan:before {
+            content: "\e837";
+        }
+        
+        .icon-quanxuan:before {
+            content: "\e623";
+        }
+        
+        .icon-qingkong:before {
+            content: "\e63e";
+        }
+        /* 下面是页面内样式，无需引用 */
+        
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        
+        li {
+            list-style: none;
+        }
+        
+        .clearfix {
+            *zoom: 1;
+        }
+        
+        .clearfix:after {
+            clear: both;
+            display: block;
+            content: "";
+            height: 0;
+            overflow: hidden;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #333;
+        }
+        
+        a:hover {
+            color: #f00;
+        }
+        
+        .center {
+            text-align: center;
+            margin-top: 20px;
+            font-family: "Microsoft Yahei";
+        }
+        
+        #box {
+            width: 640px;
+            margin: 20px 35px;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: 12px;
+            position: relative;
+            height: 30px;
+        }
+        
+        #left,
+        #right {
+            position: absolute;
+            z-index: 2px;
+            cursor: pointer;
+            background: #eee;
+            width: 20px;
+            text-align: center;
+            height: 100%;
+            line-height: 2.4;
+        }
+        
+        .content {
+            margin-left: 20px;
+            width: 600px;
+            height: 30px;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            background: #ccc;
+        }
+        
+        #wrap {
+            position: absolute;
+            left: 0;
+            width: 1500px;
+        }
+        
+        #wrap ul {
+            padding: 0;
+        }
+        
+        #wrap li {
+            color: white;
+            text-align: center;
+            line-height: 23px;
+            padding: 5px 35px 5px;
+            background: gray;
+            float: left;
+            height: 23px;
+            margin-right: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .liDel {
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+            background: white;
+            color: #1E9FFF;
+            border: 0;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+        
+        .liDel:hover {
+            color: red;
+        }
+        
+        .liActive {
+            background: #1E9FFF !important;
+        }
+        
+        .settingTitle {
+            width: 300px;
+        }
+        
+        #settingClear::after {
+            content: "clear";
+            position: relative;
+            top: 3px;
+            font-size: 18px;
+            left: 680px;
+            right: 0;
+            width: 0;
+            height: 0;
+            background: #1E9FFF;
+            color: #fff;
+            padding: 6px 10px;
+        }
+        
+        #left::after {
+            content: "";
+            position: absolute;
+            /* left: 50%; */
+            top: 0;
+            width: 0;
+            height: 0;
+            left: -40px;
+            border: 15px solid transparent;
+            border-right-color: #1E9FFF;
+        }
+        
+        #right::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 0;
+            height: 0;
+            right: -660px;
+            border: 15px solid transparent;
+            border-left-color: #1E9FFF;
+        }
+        
+        .user_id {
+            display: none;
+        }
+        .layui-form-pane .layui-input-block{
+            margin-left:0;
+        }
+        .layui-input-block{
+            margin-left:0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layui-row" style="width: 80%;margin: 20px auto;">
+        <div class="layui-col-md6 layui-col-md-offset3">
+            <div class="grid-demo">
+                <!-- <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+                    <legend>Setting</legend>
+                </fieldset> -->
+                <span class='user_id'> <?php echo $_SESSION['cooper_user_info'][0]['id'];?></span>
+                <form class="layui-form layui-form-pane" onsubmit="return false;" id="formBox">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">product</label>
+                        <div class="layui-input-block" id="checkProduct">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">project</label>
+                        <div class="layui-input-block" id="checkProject">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item layui-form" lay-filter="stage">
+                        <label class="layui-form-label">Stage:</label>
+                        <div class="layui-input-inline">
+                            <select name="build" multiple lay-tools id='stage_select' lay-omit>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item" style="margin-top:30px;">
+                        <div class="layui-input-block" style='text-align: center'>
+                            <button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="submitAdd">Save</button>
+                            <button class="layui-btn backbtn layui-btn-normal" lay-submit="" lay-filter="submitCancel">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="./layui/layui.js"></script>
+    <script src="./layui/x-layui.js"></script>
+    <script src="../../js/jquery.js"></script>
+    <script>
+        // 遍历checkbox
+        function mapCheck(arr, type, html) {
+            html = '';
+            $.each(arr, function(index, item) {
+                html += "<input type='checkbox' name='" + type + '[' + item.id + ']' + "' title='" + item[type] +
+                    "'>"
+            })
+            return html;
+        }
+
+        // 初始化选中
+        function mapOneCheck(arr, type) {
+            $.each(arr, function(i, item) {
+                $("input[name*='" + type + "']").attr('checked', false)
+            })
+            $.each(arr, function(i, item) {
+                $("input[name*='" + type + "[" + item + "]" + "']").attr('checked', true)
+            })
+        }
+
+
+        function mapBuildCheck(arr, type, html) {
+            html = '<option value="">Select the Stage</option>';
+            $.each(arr, function(index, item) {
+                html += "<option value='" + item
+                    .id + "'>" + item[type] + "</option>"
+
+            })
+            return html;
+        }
+
+        function mapOneBuildCheck(arr) {
+            if (arr == '') {
+                var a = $("#stage_select").next();
+                var b = $(a).find('dd').next();
+                var c = $(b).children("dd");
+                for (i = 0; i < c.length; i++) {
+                    d = $(c[i]).find('div');
+                    if ($(d).hasClass('layui-form-checked')) {
+                        $(d).click();
+                    }
+                }
+                return;
+            }
+
+            var a = $("#stage_select").next();
+            var b = $(a).find('dd').next();
+            var c = $(b).children("dd");
+
+            for (k = 0; k < c.length; k++) {
+                d = $(c[k]).find('div');
+                if ($(d).hasClass('layui-form-checked')) {
+                    $(d).click();
+                }
+            }
+
+            for (i = 0; i < arr.length; i++) {
+                for (j = 0; j < c.length; j++) {
+                    layvalue = $(c[j]).attr('lay-value');
+                    if (arr[i] == layvalue) {
+                        d = $(c[j]).find('div');
+                        if ($(d).hasClass('layui-form-checked')) {
+                            continue;
+                        }
+                        $(d).click();
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        layui.use(['element', 'table', 'layer', 'form', 'jquery'], function() {
+            var element = layui.element;
+            var table = layui.table;
+            var form = layui.form;
+            var $ = layui.jquery;
+
+            //获取默认选中
+            var settingId;
+            $.ajax({
+                url: '../setting_handle.php?action=get_default_settingid',
+                async: false,
+                dataType: 'json',
+                success: function(res) {
+                    settingId = res;
+                }
+            });
+
+            // 获取所有checkbox以及选中项
+            $.ajax({
+                url: '../setting_handle.php?action=get_setting',
+                type: 'get',
+                dataType: 'json',
+                success: function(res) {
+                    var productHtml = projectHtml = stageHtml = stationHtml = statusHtml = '';
+                    productHtml = mapCheck(res.product, 'product', productHtml)
+                    projectHtml = mapCheck(res.project, 'project', productHtml)
+                    stageHtml = mapBuildCheck(res.build, 'build', productHtml)
+                    $('#checkProduct').html(productHtml);
+                    $('#checkProject').html(projectHtml);
+                    $('#stage_select').html(stageHtml);
+                    form.render();
+                    // form.render('select');
+                    if (settingId != 0) {
+                        //显示默认设置
+                        $.ajax({
+                            url: '../setting_handle.php?action=get_setting_info',
+                            type: 'post',
+                            dataType: 'json',
+                            data: {
+                                setting_id: settingId
+                            },
+                            success: function(res) {
+                                if (res == 'fail') {
+                                    mapOneBuildCheck('');
+                                    mapOneBuildCheck('');
+                                }
+                                // 清除select中的数据
+                                mapOneBuildCheck('');
+                                // form 重新赋值 全部置空
+                                form.val('stage', {
+                                    'build': {}
+                                })
+
+                                if (res.product) {
+                                    mapOneCheck(res.product.id, 'product')
+                                }
+                                if (res.project) {
+                                    mapOneCheck(res.project.id, 'project')
+                                }
+                                if (res.build) {
+                                    mapOneBuildCheck(res.build.id)
+                                }
+                                form.render();
+                            }
+                        })
+                    }
+
+
+                }
+            });
+
+            // 监听表单save提交
+            form.on('submit(submitAdd)', function(data) {
+                if (settingId != 0) {
+                    var data = data.field;
+                    data.setting_id = settingId;
+                    $.ajax({
+                        url: '../setting_handle.php?action=update_setting',
+                        type: 'post',
+                        dataType: 'json',
+                        data: data,
+                        success: function(res) {
+                            // console.log(res)
+                            if (res == 'success') {
+                                layer.msg('Update Success', {
+                                    icon: 1
+                                })
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 1000)
+                            } else {
+                                layer.msg('Update Fail', {
+
+                                    icon: 5
+                                })
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 1000)
+                            }
+                        }
+                    })
+                }else{
+                    var data = data.field;
+                    $.ajax({
+                        url: '../setting_handle.php?action=add_setting',
+                        type: 'post',
+                        dataType: 'json',
+                        data: data,
+                        success: function(res) {
+                            parent.location.href = '../main.html'
+                        }
+                    })
+                }
+            });
+
+            // 监听表单Update提交
+            form.on('submit(submitUpdate)', function(data) {
+                if ($("#settingList .liActive").attr('name') == undefined) {
+                    layer.msg('请选择Setting名称', {
+                        icon: 3
+                    });
+                } else {
+                    var data = data.field;
+                    data.setting_id = $("#settingList .liActive").attr('name');
+                    $.ajax({
+                        url: '../setting_handle.php?action=update_setting',
+                        type: 'post',
+                        dataType: 'json',
+                        data: data,
+                        success: function(res) {
+                            // console.log(res)
+                            if (res == 'success') {
+                                layer.msg('Update Success', {
+                                    icon: 1
+                                })
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 1000)
+                            } else {
+                                layer.msg('Update Fail', {
+
+                                    icon: 5
+                                })
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 1000)
+                            }
+                        }
+                    })
+                }
+            });
+
+            // setting列表操作以及渲染
+            // 封装getStyle函数
+            function getStyle(obj, attr) {
+                return obj.currentStyle ? obj.currentStyle[attr] : getComputedStyle(obj, false)[attr];
+            }
+
+            // 监听表单ok提交
+            form.on('submit(submitOk)', function() {
+                var settingid = $("#settingList .liActive").attr('name')
+                $.ajax({
+                    url: '../setting_handle.php?action=update_settingid',
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        settingId: settingid
+                    },
+                    success: function(res) {
+                        window.location.href = './index.html';
+                    }
+                })
+            });
+            form.on('submit(submitCancel)', function() {
+                parent.location.href = '../main.html'
+            })
+        })
+    </script>
+</body>
+
+</html>

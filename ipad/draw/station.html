@@ -1,0 +1,125 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>TeamEase</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+    <style>
+        body {
+            margin: 0px;
+            height: 0px;
+            overflow: hidden;
+            min-width: 1200px;
+        }
+        .layui-body {
+            left: 0;
+        }
+
+        .layui-layout-admin .layui-body {
+            bottom: 10px;
+        }
+
+        #navLeft {
+            left: 0px !important;
+        }
+        #navLeft>li>a {
+            font-size: 18px !important;
+            font-weight: bold;
+            /* margin-left: -10px; */
+            height: 48px;
+        }
+       
+        .copy_right{
+            width:100%;
+            text-align: center;
+            position: fixed;
+            bottom: 10px;
+            color:#ccc;
+            font-size: 12px;
+        }
+        /* .layui-nav-bar {
+            margin-top: 8px ;
+        }
+        */
+    </style>
+     <!-- <script>  
+        var station_name = window.location.search.slice(1).split('&')[0].split('=')[1];
+        console.log(station_name)
+</script> -->
+</head>
+
+<body class="layui-layout-body">
+  
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header" style="height: 48px;">
+            <ul class="layui-nav layui-layout-left" id="navLeft" style="height: 48px;padding: 0;width: 83.3%;text-align: left;margin-left: 29px;">
+               
+                <li class="layui-nav-item" id="list">
+                        <a href="./introduction.html" target="main">Introduction</a>
+                    </li>
+                <!-- <li class="layui-nav-item">
+                   
+                    <a href="./add.html" target="main">Add</a>
+                </li> -->
+            </ul>
+        </div>
+        <div class="layui-body" style="overflow-y:hidden;">
+            <!-- 内容主体区域 -->
+            <div style="height:100%">
+                <iframe id="main" src="./introduction.html" name="main" style="overflow: visible;" scrolling="auto"
+                    frameborder="no" width="100%" height="100%" ranat="server"></iframe>
+                
+            </div>
+        </div>
+       
+        <p class='copy_right'>Copyright &copy; 2019 Foxconn Power by Software </p>
+    </div>
+    <script src='../../js/jquery.js'></script>
+    <script src='../../layui/layui.js'></script>
+    <!-- <script src='../js/index.js'></script> -->
+    <script src='../../layui/x-layui.js'></script>
+    
+
+    <script>
+        layui.use(['form', 'layer', 'element', 'laydate', 'upload', 'upload', 'rate', 'jquery'], function () {
+            var form = layui.form,
+                $ = layui.jquery;
+            upload = layui.upload,
+                laydate = layui.laydate,
+                layer = layui.layer;
+            rate = layui.rate;
+            
+            var station_name = window.location.search.slice(1).split('&')[0].split('=')[1];
+           
+             
+        })
+    </script>
+</body>
+
+</html>

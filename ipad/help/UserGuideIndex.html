@@ -1,0 +1,50 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>UserGuideIndex</title>
+	<style>
+		a{
+			margin-bottom: 4px;
+    		text-decoration: none;
+    		color: #666;
+    		font-family:Arial;
+    	}
+    	a:link{text-decoration:none;}
+    	a:visited{text-decoration:none;}
+    	a:hover{text-decoration:underline;color: Aqua;}
+    	a:active{text-decoration:underline;color: DarkTurquoise;}
+    	h3{text-align:left;font-family:Arial;}
+	</style>
+</head>
+<body>
+	<h3>Table of contents</h3>
+	<a href="UserGuide.html" target="index">User Guide</a><br />
+	<a href="UserGuide.html#G1" target="index">Assignment distribution and cooperation</a><br />
+	<a href="UserGuide.html#G2" target="index">Record search and browse</a><br />
+	<a href="UserGuide.html#G3" target="index">Data analysis and report</a><br />
+</body>
+</html>

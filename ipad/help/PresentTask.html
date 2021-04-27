@@ -1,0 +1,78 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>PresentTask</title>
+    <style>
+        h1{background-color:DeepSkyBlue;color:white;text-align:center;font-family:New Times Roman;}
+    </style>
+</head>
+<body>
+	<h1>Inspect Present Tasks</h1>
+	<p>The task table is arranged by task No. by default. The selected tasks defined by user's preferences will be shown after logging in.</p>
+	<h2><a name="T1">All task</a></h2> 
+	<p>Show all the existing tasks in the project.</p>
+	<h2><a name="T2">My task</a></h2>
+	<p>Show the tasks that are related to user.</p>
+	<h2><a name="T3">Task status</a></h2>
+	<p>Click different status to track corresponding tasks. For example, click "On-going" button to track unfinished tasks.</p>
+	<h2><a name="T4">Table sorting</a></h2>
+	<p>To search for certain tasks, click the "up-down" button to sort the table, or fill in the page No. jumping to a certain page. The number of items contained in a page is also available to be set here.</p>
+	<h2><a name="T5">Unread tasks</a></h2>
+	<p>Click the bell icon to check all the unread tasks.</p>
+	<h2><a name="T6">Data export</a></h2>
+	<p>To export task list to Microsoft Excel, click "Export Excel".To gain filtered task table, select needed data range, product names, project names, stages, station names, and task status, and click "Export".</p>
+	<h1>Filter</h1>
+	<p>
+		Use the existing filters besides task status to search for wanted tasks efficiently. To update or create filters, click "Filter".
+	</p>
+	<h2><a name="F1">Filter settings</a></h2>
+	<p>
+		ETA range, product, project, stage, station, and task status are available to be set for a new filter. For more explanation about the settings, please refer to "Task Contents".
+	</p>
+	<h2><a name="F2">Edit filter labels</a></h2>
+	<p>
+		To add a new filter label, click "Add", and then set all the necessary features. To change the contents of a filter, choose the filter, change its settings and click "Update". To delete a filter, choose the filter and click "Delete".
+	</p>
+	<h2><a name="F3">Choose existing labels</a></h2>
+	<p>To use an existing filter, click the filter and then click "OK". Click "Cancel" to go back without any change.</p>
+	<h1>Task status review and update</h1>
+	<p>To review or update the status of a task, click a task in the task table.</p>
+	<h2><a name="E1">Review a task flow</a></h2>
+	<p>The task's initial requirements and every updates can be reviewed here. Move mouse on a name to check contact information.</p>
+	<h2><a name="E2">Update the status</a></h2>
+	<p>
+		The person who created the task or is handling the task have access to update the task status. To update the status, choose an operation, fill in current status or reasons, fill in overlay version, upload supplemental files and Click "Submit". Operations are defined as below:
+		<ul type="square">
+			<li>Click "Update" to update an undergoing task. A succeeding DRI should be chosen here.</li>
+			<li>Click "Done" to close a finished task. Please fill out the finishing time and comments.</li>
+			<li>Click "Block" for a blocked task. Blocking reasons should be fill out here.</li>
+			<li>Click "Cancel" when the update is confirmed unnecessary or the update will be validated in another requirement.</li>
+			<li>Click "Tranform" to change current DRI. This operation is only available for team leaders.</li>
+		</ul>
+	</p>
+</body>
+</html>

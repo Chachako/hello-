@@ -1,0 +1,66 @@
+<?php 
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>TaskContents</title>
+    <style>
+        h1{background-color:DeepSkyBlue;color:white;text-align:center;font-family:New Times Roman;}
+    </style>
+</head>
+<body>
+	<h1>Task Contents</h1>
+	<h3><a name="M1">Task No.</a></h3>
+	<p>Generated automatically for different tasks by the system.</p>
+	<h3><a name="M2">Product</a></h3>
+	<p>Task related merchandise, for example, iPad, Watch, Keyboard, etc.</p>
+	<h3><a name="M3">Project</a></h3>
+	<p>Product code, for example, PG, PF, etc.</p>
+	<h3><a name="M4">Stage</a></h3>
+	<p>Building phases such as P1, EVT, DVT, PVT, etc.</p>
+	<h3><a name="M5">Station</a></h3>
+	<p>At which the task should implement, such as QT0a, CT1, Magnet-Hall, etc.</p>
+	<h3><a name="M6">Task title</a></h3>
+	<p>Brief description of the task.</p>
+	<h3><a name="M7">Priority</a></h3>
+	<p>Indicate the urgency of the task including low, high, and normal.</p>
+	<h3><a name="M8">DRI</a></h3>
+	<p>The directly responsibility indictor who is currently handling the task.</p>
+	<h3><a name="M9">Requestor</a></h3>
+	<p>The person who put forward the demand initially.</p>
+	<h3><a name="M10">ETA</a></h3>
+	<p>The task's expected finishing time.</p>
+	<h3><a name="M11">Status</a></h3>
+	<p>Show the task's current running status. The status is categorized as below:</p>
+	<ul type="square">
+		<li>Done - The requirement has been realized. Marked as green.</li>
+		<li>On-going - An implementation of the requirement is underway following regular procedure. Marked as yellow.</li>
+		<li>Cancel - An item or function has been confirmed unnecessary, or will be validated in another requirement. Marked as grey.</li>
+		<li>Block - The task is blocked in the middle. Marked as red.</li>
+	</ul>
+	<img src="colorMeanings.png" width="400" height="250"/>
+	<br />
+</body>
+</html>
