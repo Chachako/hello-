@@ -1,0 +1,36 @@
+
+Please help to update QN/QF CG-QT/CT2/CT3 station Overlay. Add Display_Power_Test test item after SN, and add "bl -l" after test
+
++ FX QT team and Susie 
+
+Hi Wendy/Daniel/Lorne/Abby, please help update CG-QT/CT2/CT3 with Display power test sequence below. Its same I mentioned in another mail to catch no backlight issue online.
+
+Hi Susie, could you help add sequence in IQC too. Thanks
+
+Delia Chang  |  Hardware Test Engineering  | +86-1371-4138-856
+
+2020年4月23日 下午1:33，Real Lei <real_lei@apple.com> 写道：
+
+Hi Delia,
+
+Please help to add the display power test at IQC/CG-QT/CT2/CT3. Please collect some data first and we will define the limit later.
+
+Test commands:
+#Disable VBUS
+charge --setma 0
+#set backlight off
+bl -o
+#Record the baseline battery current IBAT_BL_OFF with below command
+dev -k gasgauge -p
+bl -l
+#Record the battery current IBAT_BL_L, get IBAT_BRIGHTlESS_LOW = IBAT_BL_L-IBAT_BL_OFF, TM_POWER_BRIGHTlESS_LOW= IBAT_BRIGHTlESS_LOW * VBAT
+dev -k gasgauge -p
+bl -m
+#Record the battery current IBAT_BL_M, get IBAT_BRIGHTlESS_MID = IBAT_BL_M-IBAT_BL_OFF, TM_POWER_BRIGHTlESS_MID= IBAT_BRIGHTlESS_MID * VBAT
+dev -k gasgauge -p
+bl -h
+#Record the baseline battery current IBAT_BL_H, get IBAT_BRIGHTlESS_HIGH = IBAT_BL_H-IBAT_BL_OFF, TM_POWER_BRIGHTlESS_HIGH= IBAT_BRIGHTlESS_HIGH * VBAT
+dev -k gasgauge -p
+bl --nits 1000
+#Record the battery current IBAT_BL_1000, get IBAT_BRIGHTlESS_1000NITS = IBAT_BL_1000-IBAT_BL_OFF, TM_POWER_BRIGHTlESS_1000NITS= IBAT_BRIGHTlESS_1000NITS * VBAT
+dev -k gasgauge -p

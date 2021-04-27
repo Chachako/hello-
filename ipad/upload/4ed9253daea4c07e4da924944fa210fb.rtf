@@ -1,0 +1,17 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf610
+{\fonttbl\f0\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;\red255\green66\blue249;}
+{\*\expandedcolortbl;;\csgenericrgb\c100000\c25882\c97647;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Chin Left Woofer
+\b0 \uc0\u8232 audio -r\u8232 processaudio --freebufs all\u8232 audioparam -b spk_cn_l_w -s -n enable-mon -v true\u8232 audioparam -b spk_cn_r_w -s -n enable-mon -v true\u8232 audioparam -b spk_fh_l_w -s -n enable-mon -v true\u8232 audioparam -b spk_fh_r_w -s -n enable-mon -v true\u8232 audioparam -b spk_cn_l_t -s -n enable-mon -v true\u8232 audioparam -b spk_cn_r_t -s -n enable-mon -v true\u8232 audioparam -b spk_fh_l_t -s -n enable-mon -v true\u8232 audioparam -b spk_fh_r_t -s -n enable-mon -v true\cf2 \uc0\u8232 processaudio --readfile step_sine_reverse_10kHz_100Hz_16bit.wav\cf0 \uc0\u8232 processaudio --pick gain -i process0 --options '--gain -92'\u8232 processaudio --pick audio-mapper -i process1 --options "--in [0] --out [2]" --out_channels 16\u8232 loopaudio -b socmca --txport ap-mca0 --rxport ap-mca0 --usebuf process2 --bitdepth 16 -c 16\u8232 processaudio --writebuffer looprx0 --writefile output_cn_l_w.wav\u8232 processaudio --freebufs all\u8232 audio --turnoff\
+
+\b \uc0\u8232 Forehead Left  Woofer
+\b0 \uc0\u8232 audio -r\u8232 processaudio --freebufs all\u8232 audioparam -b spk_cn_l_w -s -n enable-mon -v true\u8232 audioparam -b spk_cn_r_w -s -n enable-mon -v true\u8232 audioparam -b spk_fh_l_w -s -n enable-mon -v true\u8232 audioparam -b spk_fh_r_w -s -n enable-mon -v true\u8232 audioparam -b spk_cn_l_t -s -n enable-mon -v true\u8232 audioparam -b spk_cn_r_t -s -n enable-mon -v true\u8232 audioparam -b spk_fh_l_t -s -n enable-mon -v true\u8232 audioparam -b spk_fh_r_t -s -n enable-mon -v true\cf2 \uc0\u8232 processaudio --readfile step_sine_reverse_10kHz_100Hz_16bit.wav\cf0 \uc0\u8232 processaudio --pick gain -i process0 --options '--gain -92'\u8232 processaudio --pick audio-mapper -i process1 --options "--in [0] --out [10]" --out_channels 16\u8232 loopaudio -b socmca --txport ap-mca0 --rxport ap-mca0 --usebuf process2 --bitdepth 16 -c 16\u8232 processaudio --writebuffer looprx0 --writefile output_fh_l_w.wav\u8232 processaudio --freebufs all\u8232 audio --turnoff\
+\
+\
+At FACT, DUT reads a wave file and then plays it back. If just playing tone at CT2, you may change the command labeled in pink to "processaudio --pick tone-gen \'85." command.\
+}

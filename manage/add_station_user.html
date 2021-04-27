@@ -1,0 +1,453 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:login.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:login.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>add_station</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        #box {
+            margin-left: 25%;
+            width: 800px;
+        }
+        
+        .box {
+            margin: 0 auto;
+            width: 600px
+        }
+        
+        .layui-input-block {
+            margin-top: 15px
+        }
+        
+        .layui-input-block>.layui-form-select {
+            width: 190px
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="box">
+        <form class="layui-form">
+            <label class="layui-form-label">Project</label>
+            <div class="layui-input-block">
+                <select name="select_project" lay-filter="select_project">
+                        </select>
+            </div>
+        </form>
+        <table style="margin-left:300px;" id="project_station" lay-filter="project_station"></table>
+    </div>
+
+
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="add">Add/Update</a>
+        <a class="layui-btn layui-btn-xs" lay-event="info">Info</a>
+        <!-- <a class="layui-btn layui-btn-xs" lay-event="updateStationUser"'>Update</a> -->
+
+    </script>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script>
+        // 重载project_station表单
+        function initTable(projectId, table) {
+            table.reload('project_station', {
+                url: '../admin/handle.php?action=get_station_project',
+                method: 'post',
+                where: {
+                    project: projectId
+                },
+                page: {
+                    curr: 1
+                }
+            });
+        }
+
+        // 重载Info表单
+        function initInfoTable(id, table) {
+            table.reload('info', {
+                url: '../admin/handle.php?action=get_station_user',
+                method: 'post',
+                where: {
+                    station_project_id: id
+                },
+                page: {
+                    curr: 1
+                }
+            });
+        }
+
+        // 用户选择下拉框
+        function userSelect(form) {
+            var group = $('.department').val();
+            var station_project_id=$('#station_project_id').val();
+            $.ajax({
+                url: '../admin/user_handle.php?action=get_group_account',
+                dataType: 'json',
+                type: 'post',
+                data: {
+                    group: group
+                },
+                success: function(response) {
+
+                   var username_id=0;
+
+                   $.ajax({
+                   url: '../admin/user_handle.php?action=getgroupname',
+                   dataType: 'json',
+                   type: 'post',
+                   async: false , 
+                   data: {
+                    station_project_id:station_project_id, 
+                    group: group
+                   },
+                   success: function(response) {
+                       console.log(response);
+                    username_id=response;
+                   }
+                   });
+
+                    $("select[name='username']").html("");
+                    var username = "";
+                    for (var n = 0; n < response.length; n++) {
+                        if(Trim(response[n]['id']+"")==Trim(username_id+"")){
+                        username = "<option value='" + response[n]['id'] + "'selected> " + response[n]['username'] + "</option>"
+                        }else{
+                        username = "<option value='" + response[n]['id'] + "'> " + response[n]['username'] + "</option>"
+                        }
+                        $("select[name='username']").append(username);
+                    }
+                    
+                    form.render('select');
+                }
+            });
+        }
+        function Trim(str)
+         { 
+        return str.replace(/(^\s*)|(\s*$)/g, ""); 
+        }
+
+
+        // 部门下拉框
+        function groupSelect(form,data) {
+            $.ajax({
+                url: '../admin/handle.php?action=get_group_list_create',
+                dataType: 'json',
+                success: function(response) {
+                    response = response.data;
+                    console.log(response);
+                    $("select[name='group']").html("");
+                    var department = "";
+
+                    for (var n = 0; n < response.length; n++) {
+                        department = "<option value='" + response[n]['id'] + "'> " + response[n]['group'] + "</option>"
+                        $("select[name='group']").append(department);
+                    }
+
+                    form.render('select');
+                    userSelect(form);
+                }
+            });
+        }
+
+        // 
+        function msg(layer, data) {
+            icon = 5;
+            if (data == 'success') {
+                icon = 6;
+            }
+            layer.msg(data, {
+                time: 1000,
+                icon: icon
+            }, function() {
+                // 获得frame索引
+                var index = layer.index;
+                //关闭当前frame
+                layer.close(index);
+                window.location.reload();
+            });
+        }
+    </script>
+    <script type="text/javascript">
+        layui.use(['element', 'table', 'form', 'jquery', 'layer', 'laypage'], function() {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+
+            // 表格渲染
+            table.render({
+                elem: '#project_station',
+                id: 'project_station',
+                height: 'auto',
+                width: 800,
+                align: 'right',
+                loading: false,
+                page: true,
+                limit: 10,
+                limits: [10, 30, 50],
+                cols: [
+                    [{
+                        type: 'numbers',
+                        title: 'ID',
+                        align: 'center',
+                    }, {
+                        field: 'id',
+                        align: 'center',
+                        fixed: 'left',
+                        hide: true
+                    }, {
+                        field: 'project',
+                        align: 'center',
+                        title: 'Project'
+                    }, {
+                        field: 'station',
+                        align: 'center',
+                        title: 'Station'
+                    }, {
+                        fixed: 'right',
+                        align: 'center',
+                        title: 'Action',
+                        toolbar: '#barDemo'
+                    }]
+                ]
+            });
+
+            // 初始化Info表单
+            table.render({
+                elem: '#Info',
+                id: 'info',
+                height: 'auto',
+                width: 600,
+                align: 'right',
+                loading: false,
+                page: true,
+                limit: 5,
+                limits: [5],
+                size: 'sm',
+                cols: [
+                    [{
+                        type: 'numbers',
+                        title: 'ID',
+                        align: 'center',
+                    }, {
+                        field: 'id',
+                        align: 'center',
+                        hide: true
+                    }, {
+                        field: 'station_project_id',
+                        align: 'center',
+                        title: 'Project',
+                        hide: true
+                    }, {
+                        field: 'group',
+                        align: 'center',
+                        title: 'Group'
+                    }, {
+                        field: 'username',
+                        align: 'center',
+                        title: 'Username'
+                    }]
+                ]
+            });
+
+
+            // 加载选择部门下拉框
+            $.ajax({
+                type: 'post',
+                url: '../admin/handle.php?action=get_project',
+                cache: false,
+                async: false,
+                dataType: 'json',
+                success: function(response) {
+                    $("select[name='select_project']").html("");
+                    var project = "";
+                    for (var n = 0; n < response.length; n++) {
+                        project = "<option value='" + response[n]['id'] + "'> " + response[n]['project'] + "</option>"
+                        $("select[name='select_project']").append(project);
+                    }
+                    form.render('select');
+                    projectId = $("select[name='select_project']").val();
+                    initTable(projectId, table);
+                }
+            });
+
+            // 监听select 专案改变
+            form.on('select(select_project)', function(data) {
+                projectId = data.value;
+                initTable(projectId, table);
+            });
+            //监听select 部门下拉框
+            form.on('select(department)', function(data) {
+                
+                userSelect(form);
+            });
+
+            // 监听table行工具条
+            table.on('tool(project_station)', function(obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                // var tr = obj.tr; //获得当前行 tr 的DOM对象
+                if (layEvent === 'info') {
+                    console.log(data);
+                    // console.log('a');
+                    layer.open({
+                        type: 1,
+                        title: 'Info',
+                        area: ['700px;', '400px'],
+                        anim: 1, //弹出动画
+                        id: 'add',
+                        moveType: 1,
+                        content: $('#eventInfo'),
+                        success: function(layer, index) {
+                            initInfoTable(data.id, table);
+                            $('.project_info').text(data.project);
+                            $('.station_info').text(data.station);
+                            // console.log($('.project_info'))
+                        }
+                    })
+                }
+
+                if (layEvent === 'add') {
+                    layer.open({
+                        type: 1,
+                        title: 'Add',
+                        area: ['600px;', '600px'],
+                        anim: 1, //弹出动画
+                        id: 'add',
+                        moveType: 1,
+                        content: $('#eventAdd'),
+                        success: function(layer, index) {
+                            $('#station_project_id').val(data.id);
+                            groupSelect(form,data.id);
+                        }
+                    })
+                 }
+
+                // if (layEvent==='updateStationUser') {
+                //    layer.alert("请等下个版本")
+
+
+                // //     layer.confirm('确定更新么',function(index){
+                // //        $.ajax({
+                // //        type: 'post',
+                // //        url: '../admin/handle.php?action=update_station_user',
+                // //        data: data,
+                // //        cache: false,
+                // //        dataType: 'json',
+                // //        success: function(data) {
+                // //         if (data== 'success') {
+                // //             table.reload('usedTable')
+                // //             layer.closeAll();
+                // //         }else{
+                // //             alert('fail');
+                // //         }
+                // //     }
+                // // });
+                // //     })
+
+                // }
+
+
+            });
+
+            // 监听form表单
+            layui.use('form', function() {
+                var form = layui.form;
+                // 锁定提交按钮
+                var lock = false;
+                form.on('submit(addform)', function(data) {
+                    if (!lock) {
+                        lock = true;
+                    } else {
+                        return false;
+                    }
+                    var datas = data.field;
+                    // alert(actionId);
+                    // console.log(datas);
+                    // return false;
+                    $.ajax({
+                        url: '../admin/handle.php?action=add_station_user',
+                        data: datas,
+                        dataType: 'json',
+                        type: 'post',
+                        success: function(data) {
+                            
+                            msg(layer, data)
+                            // layer.alert('', {icon: 1});
+                        },
+                    });
+                });
+            });
+        });
+    </script>
+
+    <form class="layui-form" id="eventAdd" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item" style="display:none">
+            <label class="layui-form-label">Id</label>
+            <div class="layui-input-block">
+                <input type="text" name="station_project_id" id="station_project_id" required lay-verify="required" placeholder="" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" id='department'>
+            <label class="layui-form-label">Department:</label>
+            <div class="layui-input-block" class='departmentdiv'>
+                <select name="group" lay-verify="required" class='department' lay-filter="department">
+					</select>
+            </div>
+        </div>
+        <div class="layui-form-item" id='username'>
+            <label class="layui-form-label">Username:</label>
+            <div class="layui-input-block" class='departmentdiv'>
+                <select name="username" lay-verify="required" class='username' lay-filter="username">
+					</select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addform">Submit</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="eventInfo" style="display:none">
+        <div class="box">
+            <div class="info">
+                <label><b>Project</b></label>
+                <span class="project_info"></span>&emsp;
+                <label><b>Station</b></label>
+                <span class="station_info"></span>
+            </div>
+            <table id="Info"></table>
+        </div>
+    </div>
+</body>
+
+</html>

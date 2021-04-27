@@ -1,0 +1,289 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login_info</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        #box{
+             position:relative;
+            margin-left: 5%;
+            width: 700px;
+        }
+
+
+         #box2{
+            margin-left: 60%;
+            width: 800px;
+
+             position:absolute;
+            top:1px;
+            right:42px;
+      
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="box">
+       <button onclick="refresh()" id="refresh" class="layui-btn layui-btn-warm layui-btn-sm">Refresh</button> 
+        <table style="margin-left:300px;" id="usedTable" lay-filter="used"></table>
+    
+
+    </div>
+
+    <div id="box2">
+       <button onclick="refresh2()" id="refresh" class="layui-btn layui-btn-warm layui-btn-sm">Refresh</button> 
+
+
+       <button onclick="refresh3()" id="refresh" class="layui-btn layui-btn-warm layui-btn-sm">Delete Data</button> 
+    
+        <table style="margin-left:600px;" id="loginTable" lay-filter="login" ></table> 
+
+    </div>
+<!-- 
+    <script type="text/html" id="barDemo">
+
+       <a class="layui-btn layui-btn-xs" lay-event="deletebuild" style='background:red'>Delete</a>
+
+    </script> -->
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script type="text/javascript">
+        layui.use(['element', 'table', 'form', 'jquery', 'layer', 'laypage'], function () {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+
+            // 表格渲染
+            table.render({
+                elem: '#usedTable',
+                url: '../admin/handle.php?action=get_login_info', //数据接口
+                id: 'usedTable',
+                height: 'auto',
+                width: 600,
+                align: 'right',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 30, 50],
+                cols: [
+                    [{
+                            field: 'id',
+                            width: '50%',
+                            align: 'center',
+                            title: 'ID',
+                            sort: true,
+                            fixed: 'left',
+                            templet: '#titleid'
+                        },
+                        {
+                            field: 'username',
+                            width: '50%',
+                            align: 'center',
+                            title: 'Login Name',
+                            templet: '#nameid'
+                        }
+                       
+                    ]
+                ]
+            });
+
+
+             // 表格渲染
+            table.render({
+                elem: '#loginTable',
+                url: '../admin/handle.php?action=get_login_out_info', //数据接口
+                id: 'loginTable',
+                height: 'auto',
+                width: 800,
+                align: 'right',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 30, 50],
+                 method: 'post',
+                cols: [
+                    [{
+                            field: 'id',
+                            width: '20%',
+                            align: 'center',
+                            title: 'ID',
+                            sort: true,
+                            fixed: 'left',
+                            templet: '#titleid'
+                        },
+                        {
+                            field: 'user_name',
+                            width: '40%',
+                            align: 'center',
+                            sort: true,
+                            title: 'Login Name',
+                            templet: '#name_id'
+                        },
+                         {
+                            field: 'login_time',
+                            width: '40%',
+                            align: 'center',
+                            sort: true,
+                            title: 'Login Time'
+                        }
+                       
+                    ]
+                ]
+            });
+
+
+
+          
+
+
+            
+            refresh = function () {
+               console.log("111");
+                table.reload('usedTable', {
+                    url: '../admin/handle.php?action=get_login_info',
+                        method: 'get',
+                        page: {
+                            curr: 1
+                            }
+                        })
+                  
+                   
+                    }
+             refresh2 = function () {
+               console.log("111");
+                table.reload('loginTable', {
+                    url: '../admin/handle.php?action=get_login_out_info',
+                    method: 'post',
+                    where:{
+                        page:1,
+                        limit:20,
+                    }, 
+                    page: {
+                        curr: 1
+                        }
+                    })  
+                  
+                   
+                    }        
+        refresh3 =  function(){
+            $.ajax({
+                   type: 'post',
+                    url: '../admin/handle.php?action=delete_login_out_info',
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function(response) {
+                      table.reload('loginTable', {
+                    url: '../admin/handle.php?action=get_login_out_info',
+                    method: 'post',
+                    where:{
+                        page:1,
+                        limit:20,
+                    }, 
+                    page: {
+                        curr: 1
+                        }
+                    })  
+                       
+                    }
+            });
+
+
+
+        }
+            //   table.on('tool(used)',function(obj){
+            //     var data = obj.data;
+            //     var layEvent = obj.event;
+            //     var tr = obj.tr;
+            //     if (layEvent==='deletebuild') {
+            //         layer.confirm('Are you sure?',function(index){
+            //            $.ajax({
+            //            type: 'post',
+            //            url: '../admin/handle.php?action=delete_build',
+            //            data: data,
+            //            cache: false,
+            //            dataType: 'json',
+            //            success: function(data) {
+            //             if (data== 'success') {
+            //                 table.reload('usedTable')
+            //                 layer.closeAll();
+            //             }else{
+            //                 alert('fail');
+            //             }
+            // }
+            // });
+            //         })
+
+            //     }
+
+            // }
+            //     );
+
+        
+
+
+
+        })
+    </script>
+    <script type="text/html" id="titleid">
+        {{d.LAY_INDEX}}
+    </script>
+    <script type="text/html" id="nameid">
+        <a href="./account_loadingInfo.html?user_id={{d.user_id}}" class="layui-table-link">{{d.username}}</a>
+    </script>
+    <script type="text/html" id="name_id">
+        <a href="./account_loadingInfo.html?user_id={{d.user_id}}" class="layui-table-link">{{d.user_name}}</a>
+    </script>
+    <script type="text/html" id="category">
+        {{#  layui.each(d.category.split('|'), function(index, item){ }}
+           <span class="layui-badge">{{ item }}</span>
+        {{#  }) }}
+    </script>
+  <!--   
+    <form class="layui-form" id="addForm" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Build:</label>
+            <div class="layui-input-inline">
+                <input type="text" id="build" name="build" required lay-verify="required" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addform">Submit</button>
+            </div>
+        </div> -->
+</body>
+
+</html>

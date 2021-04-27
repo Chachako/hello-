@@ -1,0 +1,268 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>add_project</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        #box {
+            margin-left: 25%;
+            width: 800px;
+        }
+        
+        .product input {
+            display: inline-block!important;
+            margin: 10px 10px 0 5px;
+        }
+        /* .product label{
+            margin-left:5px;
+        } */
+    </style>
+</head>
+
+<body>
+    <div id="box">
+        <button onclick="addBtn()" id="addBtn" class="layui-btn layui-btn-warm layui-btn-sm">Add</button>
+        <table style="margin-left:300px;" id="usedTable" lay-filter="used"></table>
+    </div>
+
+    <script type="text/html" id="barDemo">
+        {{#  if(d.enable == 1){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="forbidden_prodject" style='background:red; width: 65px'>Forbidden</a>
+        {{#  }else if(d.enable== 0){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="renew_project" style='background:green; width: 65px'>Renew</a>
+        {{# } }}
+    </script>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script type="text/javascript">
+        layui.use(['element', 'table', 'form', 'jquery', 'layer', 'laypage'], function() {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+
+            // 表格渲染
+            table.render({
+                elem: '#usedTable',
+                url: '../admin/handle.php?action=get_project_list', //数据接口
+                id: 'usedTable',
+                height: 'auto',
+                width: 800,
+                align: 'right',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 30, 50],
+                cols: [
+                    [{
+                        field: 'id',
+                        width: '8%',
+                        align: 'center',
+                        title: 'ID',
+                        sort: true,
+                        fixed: 'left',
+                    }, {
+                        field: 'product',
+                        width: '40%',
+                        align: 'center',
+                        title: 'Product'
+                    }, {
+                        field: 'project',
+                        width: '40%',
+                        align: 'center',
+                        title: 'Project'
+                    },
+                    {
+                        field: 'enable',
+                        align: 'center',
+                        title: 'Enable',
+                        templet: '#status',
+                        hide: true
+                    },
+                    { 
+                         fixed: 'right', 
+                         align: 'center', 
+                         title: 'Action', 
+                         toolbar: '#barDemo',
+                        }
+
+                    ]
+                ]
+            });
+
+
+            table.on('tool(used)',function(obj){
+                var data = obj.data;
+                var layEvent = obj.event;
+                var tr = obj.tr;
+                if (layEvent==='forbidden_prodject') {
+                    layer.confirm('Are you sure?',function(index){
+                        $.ajax({
+                            type: 'post',
+                            url: '../admin/handle.php?action=forbidden_prodject',
+                            data: data,
+                            cache: false,
+                            dataType: 'json',
+                            success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+                if (layEvent==='renew_project') {
+                    layer.confirm('Are you sure?',function(index){
+                        $.ajax({
+                            type: 'post',
+                            url: '../admin/handle.php?action=renew_project',
+                            data: data,
+                            cache: false,
+                            dataType: 'json',
+                            success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+
+
+
+
+            // 监听编辑提交按钮
+            form.on('submit(editform)', function(data) {
+                var datas = data.field;
+                $.post({
+                    async: true,
+                    url: "../admin/handle.php?action=add_project",
+                    type: "post",
+                    data: datas,
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.code == 200) {
+                            table.reload('usedTable')
+                            layer.closeAll();
+                        }
+                    },
+                    error: function() {
+                        console.log('修改失败');
+                    }
+                })
+            });
+
+            // 新增按钮
+            addBtn = function() {
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/handle.php?action=get_product',
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function(response) {
+
+                        $(".product").html("");
+                        var product = "";
+                        console.log(response.length);
+                        for (var n = 0; n < response.length; n++) {
+                            product = "<input type='radio' name='product' value='" + response[n]['id'] + "' title='" + response[n]['product'] + "'>" +response[n]['product'] 
+                            $(".product").append(product);
+                        }
+                    }
+                });
+                var title = true;
+                layer.open({
+                    type: 1,
+                    title: 'Add',
+                    area: '500px;',
+                    anim: 1, //弹出动画
+                    id: 'btn_add',
+                    moveType: 1,
+                    content: $('#addForm')
+                })
+            }
+
+
+     
+            form.on('submit(addform)', function(data) {
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/handle.php?action=add_project',
+                    data: $("#addForm").serialize(), 
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+
+                        if (data == 'success') {
+                            table.reload('usedTable')
+                            layer.closeAll();
+                        } else if (data == 'fail') {
+                            alert('fail！')
+                        } else {
+                            alert('该专案已存在，无法添加')
+                        }
+                    }
+                });
+            });
+
+        })
+    </script>
+    <form class="layui-form" id="addForm" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Product</label>
+            <div class="layui-input-block product">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Project</label>
+            <div class="layui-input-block">
+                <input type="text" name="project" required lay-verify="required" autocomplete="off" class="layui-input" style="width:200px">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addform">Submit</button>
+            </div>
+        </div>
+    </form>    
+</body>
+
+</html>

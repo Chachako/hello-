@@ -1,0 +1,121 @@
+<?php
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>工站介绍</title>
+<link rel="stylesheet" href="../../layui/css/layui.css">
+<style>
+    .all{
+        /* background-color: rgb(192, 228, 192); */
+        margin: 0 auto;
+        margin-top: 50px;
+        width: 90%;
+    }
+    .content{
+        width: 100%;
+        font-family: sans-serif;
+        line-height: 1.6;
+        color: #202122;
+        /* height: 500px; */
+        WORD-WRAP:break-word;
+        TABLE-LAYOUT:fixed;
+        /* word-break:break-all; */
+       
+    }
+    img {
+       
+        border: none; 
+        vertical-align: middle;
+        width: 200px;
+        height: 200px;
+        float: right;
+    }
+    p{
+        padding-bottom: 6px;
+        /* overflow: auto; */
+    }
+    a{
+        color: rgb(39, 154, 221);
+    }
+</style>
+
+</head>
+<body>
+  <div class="all">
+  <div class="content">
+   <!-- <p id="head" style="height: 20px;background-color: brown;    width: 100%;">
+
+   </p>
+   <p id="content"></p> -->
+
+  </div>
+</div>
+<script src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../layui/layui.js"></script>
+<script>
+// var station_name= window.localStorage.removeItem(station_name);
+//     console.log(station_name)
+ var station_name=window.sessionStorage.getItem('station_name');
+
+//    console.log(station_name)
+    $.ajax({
+       type:'post',
+       url:'./upload.php?action=select_name',
+       dataType:'json',
+       data:{
+        station_name:station_name
+       },
+       success: function(res){
+        //    console.log(res)
+        if(res==''){
+            $(".content").html("<p style='font-size:20px;text-align: center;'> Please add introductions!</p>");     
+        }else{
+        $(".content").html("");
+       div="";
+      for(var i=0;i<res.length;i++){
+         
+          div+="<div style='width: 100%;overflow: auto;margin-bottom: 50px;'><strong><p style='height:30px;font-family: serif;font-size: 20px;width: 100%;border-bottom: 1px solid #a2a9b1;padding-bottom: inherit;' >"+res[i].head+"</p></strong>";
+          div+="<p > "+res[i].content+"</p></div>"  /*style='font-family: sans-serif;line-height: 1.6;color: #202122; '*/
+         
+      }
+      $('.content').append(div);
+     
+    }
+    }
+
+    });
+  
+    function edit(obj){
+       var id=$(obj).find('span').text();
+     window.location.href="edit.html?id="+id;
+   
+      }
+
+ 
+</script>
+</body>
+</html>

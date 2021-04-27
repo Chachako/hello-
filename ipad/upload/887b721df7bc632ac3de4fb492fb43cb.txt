@@ -1,0 +1,71 @@
+Last login: Wed Jun 10 15:50:37 on ttys000
+El-Psy-Coongro:~ QT1$ cd /Users/QT1/Desktop/J5xx_motion-tester-script_2020-06-09 
+El-Psy-Coongro:J5xx_motion-tester-script_2020-06-09 QT1$ ./retrieve_doe_log.sh 
+06-11-2020 09:11:46 retrieve_doe_log.sh: DLXCL001Q4TT: NO TEST
+El-Psy-Coongro:J5xx_motion-tester-script_2020-06-09 QT1$ ./mount_root.sh
+spawn ssh -p 10022 -o NoHostAuthenticationForLocalHost=yes root@localhost nvram root-live-fs=1; reboot
+El-Psy-Coongro:J5xx_motion-tester-script_2020-06-09 QT1$ ./upload_tester_scripts.sh -r
+1
+“Number of Units Detected: 1 “
+spawn ssh -p 10022 -o NoHostAuthenticationForLocalHost=yes root@localhost mount -uw /
+building file list ... done
+
+sent 292 bytes  received 16 bytes  616.00 bytes/sec
+total size is 28534  speedup is 92.64
+building file list ... done
+
+sent 998 bytes  received 94 bytes  2184.00 bytes/sec
+total size is 63121  speedup is 57.80
+building file list ... done
+
+sent 4540 bytes  received 454 bytes  9988.00 bytes/sec
+total size is 498312  speedup is 99.78
+building file list ... rsync: link_stat "/Users/QT1/Desktop/J5xx_motion-tester-script_2020-06-09/./wav" failed: No such file or directory (2)
+done
+
+sent 25 bytes  received 16 bytes  27.33 bytes/sec
+total size is 0  speedup is 0.00
+rsync error: some files could not be transferred (code 23) at /BuildRoot/Library/Caches/com.apple.xbs/Sources/rsync/rsync-52.200.1/rsync/main.c(996) [sender=2.6.9]
+building file list ... done
+
+sent 191 bytes  received 16 bytes  414.00 bytes/sec
+total size is 3276124  speedup is 15826.69
+building file list ... done
+
+sent 783 bytes  received 16 bytes  1598.00 bytes/sec
+total size is 935247  speedup is 1170.52
+spawn ssh -p 10022 -o NoHostAuthenticationForLocalHost=yes root@localhost nvram boot-args="debug=0x104c04 serial=3 amfi=-1 cs_enforcement_disable=1 amfi_allow_any_signature=1 amfi_unrestrict_task_for_pid=1 amfi_get_out_of_my_way=1 pmap_cs=0"; reboot
+“SCRIPTS UPLOADED :D“
+El-Psy-Coongro:J5xx_motion-tester-script_2020-06-09 QT1$ ./run_motion_doe.sh J5xx_compass-display
+06-11-2020 09:14:25 run_motion_doe.sh: No DUTs detected!
+El-Psy-Coongro:J5xx_motion-tester-script_2020-06-09 QT1$ ./run_motion_doe.sh J5xx_compass-display
+06-11-2020 09:15:00 run_motion_doe.sh: “Number of Units Detected: 1 “
+building file list ... done
+
+sent 292 bytes  received 16 bytes  616.00 bytes/sec
+total size is 28534  speedup is 92.64
+building file list ... done
+
+sent 998 bytes  received 94 bytes  2184.00 bytes/sec
+total size is 63121  speedup is 57.80
+building file list ... done
+
+sent 4540 bytes  received 454 bytes  9988.00 bytes/sec
+total size is 498312  speedup is 99.78
+building file list ... rsync: link_stat "/Users/QT1/Desktop/J5xx_motion-tester-script_2020-06-09/./wav" failed: No such file or directory (2)
+done
+
+sent 25 bytes  received 16 bytes  82.00 bytes/sec
+total size is 0  speedup is 0.00
+rsync error: some files could not be transferred (code 23) at /BuildRoot/Library/Caches/com.apple.xbs/Sources/rsync/rsync-52.200.1/rsync/main.c(996) [sender=2.6.9]
+building file list ... done
+
+sent 191 bytes  received 16 bytes  414.00 bytes/sec
+total size is 3276124  speedup is 15826.69
+building file list ... done
+
+sent 783 bytes  received 16 bytes  1598.00 bytes/sec
+total size is 935247  speedup is 1170.52
+spawn ssh -p 10022 -o NoHostAuthenticationForLocalHost=yes root@localhost nohup sh -c "/var/root/Motion_DOE/motion_doe.sh J5xx_compass-display                                            --accelTesterRate 800                                            --accelCoreRate 100                                            --gyroTesterRate 800                                            --gyroCoreRate 100                                            --compassTesterRate 100                                            --compassCoreRate 100                                            --pressureTesterRate 25                                            --pressureCoreRate 25                                            --pressureComRate 25 > /dev/null 2>&1 &"
+06-11-2020 09:15:01 run_motion_doe.sh: “TEST STARTED :D“
+El-Psy-Coongro:J5xx_motion-tester-script_2020-06-09 QT1$ 

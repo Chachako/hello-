@@ -1,0 +1,401 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>add_group</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        #box{
+			margin-left: 25%;
+			width: 800px;
+		}
+	</style>
+</head>
+
+<body>
+    <!-- <span id="title" style="margin-left:5px;clear:both;" class="layui-breadcrumb">
+		  <a href="javascript:;">系统设置</a>
+		  <a><cite>used管理</cite></a>
+	</span> -->
+
+    <div id="box">
+        <button onclick="addBtn()" id="addBtn" class="layui-btn layui-btn-warm layui-btn-sm">Add</button>
+        <table style="margin-left:300px;" id="usedTable" lay-filter="used"></table>
+    </div>
+
+    <script type="text/html" id="barDemo">
+        <!-- <a class="layui-btn layui-btn-xs" lay-event="deletegroup" style='background:red'>Delete</a> -->
+        <a class="layui-btn layui-btn-xs" lay-event="edit">Edit</a>
+        {{#  if(d.enable == 1){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="forbidden_group" style='background:red; width: 65px'>Forbidden</a>
+        {{#  }else if(d.enable== 0){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="renew_group" style='background:green; width: 65px'>Renew</a>
+        {{# } }}
+	</script>
+    <!-- 修改页面 -->
+    <form class="layui-form" id="editForm" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item" style="margin-top:20px;">
+            <!-- <label class="layui-form-label">id</label> -->
+            <div class="layui-input-inline">
+                <input type="hidden" id="groupId" name="groupId" required lay-verify="required" placeholder="id" autocomplete="off" class="layui-input" readonly>
+            </div>
+        </div>
+
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Group:</label>
+            <div class="layui-input-inline" style="width: 300px">
+                <input type="text" id="group_edit" name="group_edit" required lay-verify="required" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Product:</label>
+            <div class="layui-input-inline" style="width: 300px">
+                <div id="demo2" class="xm-select-demo"></div>
+            </div>
+        </div>        
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="editform">Save</button>
+            </div>
+        </div>
+    </form>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script type="text/javascript">
+        layui.config({
+                base: '../js/'
+        }).extend({
+                xmSelect: 'xm-select'
+        }).use(['element', 'table', 'form', 'jquery', 'layer', 'laypage', 'xmSelect'], function () {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+            var xmSelect = layui.xmSelect;
+
+            // 表格渲染
+            table.render({
+                elem: '#usedTable',
+                url: '../admin/handle.php?action=get_group_list', //数据接口
+                id: 'usedTable',
+                height: 'auto',
+                width: 800,
+                align: 'right',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 30, 50],
+                cols: [
+                    [{
+                            field: 'id',
+                            width: '10%',
+                            align: 'center',
+                            title: 'ID',
+                            sort: true,
+                            fixed: 'left',
+                            templet: '#titleid',
+                        },
+                        {
+                            field: 'group',
+                            width: '30%',
+                            align: 'center',
+                            title: 'Group',
+                        },
+                        {
+                            field: 'product_id',
+                            width: '40%',
+                            align: 'center',
+                            title: 'Product',
+                        },
+                        {
+                            field: 'enable',
+                            align: 'center',
+                            title: 'Enable',
+                            templet: '#status',
+                            hide: true
+                        },
+                        { 
+                            fixed: 'right', 
+                            align: 'center', 
+                            title: 'Action', 
+                            toolbar: '#barDemo',
+                        }
+                    ]
+                ]
+            });
+
+
+
+            table.on('tool(used)',function(obj){
+                var data = obj.data;
+                var layEvent = obj.event;
+                var tr = obj.tr;
+                // console.log(data);
+                if (layEvent==='forbidden_group') {
+                    layer.confirm('Are you sure?',function(index){
+                        $.ajax({
+                            type: 'post',
+                            url: '../admin/handle.php?action=forbidden_group',
+                            data: data,
+                            cache: false,
+                            dataType: 'json',
+                            success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+                if (layEvent==='renew_group') {
+                    layer.confirm('Are you sure?',function(index){
+                        $.ajax({
+                            type: 'post',
+                            url: '../admin/handle.php?action=renew_group',
+                            data: data,
+                            cache: false,
+                            dataType: 'json',
+                            success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+                if (layEvent === 'edit') {
+                    layer.open({
+                        type: 1,
+                        title: 'Edit',
+                        area: ['500px;', '350px'],
+                        anim: 1, //弹出动画
+                        id: 'btn_edit',
+                        moveType: 1,
+                        // shade: 0.8,
+                        content: $('#editForm'),
+                        success: function(layer, index) {
+                            $('#groupId').val(data.id);
+                            $('#group_edit').val(data.group);
+
+                            var demo2 = xmSelect.render({
+                                el: '#demo2',
+                                language: 'en',
+                                tips: 'Select Product', 
+                                data: [],
+                            })
+
+                            $.ajax({
+                                url: './manage_handle.php?action=get_group_product&groupId=' + data.id,
+                                type: 'post',
+                                dataType: 'json',
+                                success: function (res) {
+                                    // console.log(res);
+                                    demo2.update({
+                                        data: res,
+                                    })
+                                }
+                            });
+                        }
+                    })
+                }
+            });
+
+            // 监听编辑提交按钮
+            form.on('submit(editform)', function (data) {
+                var datas = data.field;
+                // console.log(datas);
+                $.ajax({
+                    type: 'post',
+                    url: './manage_handle.php?action=edit_group',
+                    data: datas,
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        // console.log(data);
+                        if (data == 'success') {
+                            table.reload('usedTable')
+                            layer.closeAll();
+
+                            // location.href = "./account_list.html";
+                        } else if (data == 'fail') {
+                            alert('添加失败！')
+                        } 
+                    }
+                });
+
+            });
+
+            // 渲染equip  list
+            renderEquip = function (type) {
+                $.ajax({
+                    url: '../admin/equip/equip_list.php',
+                    type: 'get',
+                    dataType: 'json',
+                    success: function (res) {
+                        var html = '';
+                        $.each(res.data, function (i, val) {
+                            html += '<input type="checkbox" name="like[' + val.name +
+                                ']" id="' + val.name + '" title="' + val.name + '">';
+                        })
+                        $('#' + type).html(html);
+                        form.render();
+                    }
+                })
+            }
+
+            // 新增按钮
+            addBtn = function () {
+                var title = true;
+                renderEquip('addGategory');
+                layer.open({
+                    type: 1,
+                    title: 'Add',
+                    area: ['500px', '350px'],
+                    anim: 1, //弹出动画
+                    id: 'btn_add',
+                    moveType: 1,
+                    // shade: 0.8,
+                    content: $('#addForm')
+                })
+            }
+
+            // 监听新增提交按钮
+            // form.on('submit(addform)',function(data){
+
+            //     var datas = data.field;
+            //     alert();
+            // 	$.post({
+            // 		url: "../admin/handle.php?action=add_product",
+            // 		type: "post",
+            // 		data: datas,
+            // 		dataType: 'json',
+            // 		async: true,
+            // 		success: function(data){
+            // 			if(data.code == 200){
+            // 				table.reload('usedTable')
+            // 				layer.closeAll();
+            // 			}
+            // 		},
+            // 		error: function(){
+            // 			console.log('新增失败');
+            // 		}
+            // 	})
+            // })
+
+            var demo1 = xmSelect.render({
+                el: '#demo1',
+                language: 'en',
+                tips: 'Select Product', 
+                data: [],
+            })
+
+            $.ajax({
+                url: './manage_handle.php?action=get_product',
+                type: 'post',
+                dataType: 'json',
+                success: function (res) {
+                    // console.log(res);
+                    demo1.update({
+                        data: res,
+                    })
+                }
+            });
+
+            form.on('submit(addform)', function (data) {
+                var arr = demo1.getValue();
+                var array = new Array();
+                for (x in arr)
+                {
+                    array[x] = arr[x].value
+                }
+                productId = array.join("|");
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/handle.php?action=add_group&productId='+productId,
+                    data: $("#addForm").serialize(),
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data == 'success') {
+                            table.reload('usedTable')
+                            layer.closeAll();
+
+                            // location.href = "./account_list.html";
+                        } else if (data == 'fail') {
+                            alert('添加失败！')
+                        } else {
+                            alert('该Group已存在，无法添加')
+                        }
+                    }
+                });
+                // return false;
+            });
+
+        })
+    </script>
+    <script type="text/html" id="titleid">
+        {{d.LAY_INDEX}}
+	</script>
+    <script type="text/html" id="category">
+        {{#  layui.each(d.category.split('|'), function(index, item){ }}
+		   <span class="layui-badge">{{ item }}</span>
+		{{#  }) }}
+	</script>
+    <form class="layui-form" id="addForm" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Group:</label>
+            <div class="layui-input-inline" style="width: 300px">
+                <input type="text" id="group" name="group" required lay-verify="required" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Product:</label>
+            <div class="layui-input-inline" style="width: 300px">
+                <div id="demo1" class="xm-select-demo"></div>
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:40px;">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addform">Submit</button>
+            </div>
+        </div>
+</body>
+
+</html>

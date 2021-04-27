@@ -1,0 +1,299 @@
+<?php
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>工站编辑</title>
+<link rel="stylesheet" href="../manage/filter/layui/css/layui.css">
+<style>
+    .edit-introduction{
+        margin: 0 auto;
+        background: #ffffff;
+        margin-top: 50px;
+        width: 55%;
+        font-family: sans-serif;
+        line-height: 1.6;
+    }
+    .user_id {
+            display: none;
+    }
+    .layui-form-item {
+    margin-bottom: 0;
+    clear: both;
+   }
+   .unshow>#result {
+            display: none;
+        }
+.layui-form-radio>i:hover, .layui-form-radioed>i {
+    color: #5FB878;
+}
+
+</style>
+
+</head>
+<body>
+<div class="edit-introduction">
+      <span class="user_id">
+        <?php 
+        $id= $_SESSION['cooper_user_info'][0]['id'];
+        echo $_SESSION['cooper_user_info'][0]['id'];?>
+      </span>
+      <h2 style='text-align: center;padding:10px 0'>Edit Introduction</h2>
+      <form class="layui-form layui-form-pane" onSubmit="return false;" id="formBox">
+        <div style="border:1px solid #ccc;padding-bottom:30px">
+
+           
+            <div class="layui-form-item layui-form">
+                <label class="layui-form-label"  style="width: 150px;">Product: </label>
+                <div class="layui-input-block" id='checkProduct' style="margin-left:150px">
+                </div> 
+            </div>    
+            <div class="layui-form-item layui-form">
+                <label class="layui-form-label"  style="width: 150px;">Station:</label>
+                <div class="layui-input-block" id="stationname" style="margin-right: 0px; margin-left:150px">
+                    <select name="station" class="station"  id='station_select'>
+                    </select>
+                </div>
+            </div> 
+            <div class="layui-form-item layui-form">
+                <label class="layui-form-label" style="width: 150px;">Title: </label>
+                <div class="layui-input-block" style="margin-left:150px">
+                    <input  name='head' type="text" class="layui-input" id="head"  placeholder="For example:1、xxxxx" autocomplete="off">
+                </div>
+                <textarea id="text" style="display: none;"></textarea>
+            </div>
+        </div>  
+        <div style="margin-top:40px; margin-bottom: 50px;">
+            <div style='text-align: center;'>
+                <?php $username= $_SESSION['cooper_user_info'][0]['username'];?>
+                <button class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="submitAdd" id="add">Update</button>
+                <!-- <button class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="submitCancel">Cancel</button> -->
+
+            </div>
+        </div>
+          
+        </form>
+</div>
+<script src='../js/jquery.js'></script>
+<script type="text/javascript" src="../manage/filter/layui/layui.js"></script>
+<script src='../layui/x-layui.js'></script>
+<script>
+    layui.use(['layedit','form','upload'],function(){
+        var form = layui.form;
+      var layedit = layui.layedit;
+      var upload = layui.upload;
+      layedit.set({
+         uploadImage: {
+         url: 'upload.php?action=lay_img_upload' //接口url
+        ,type: 'post' //默认post
+       }
+    })
+
+   var laybuild= layedit.build('text', {
+    tool: ['strong' ,'italic' ,'underline' ,'del','|' ,'left','center','right','link','unlink']   
+    });  
+    
+    function mapCheck(arr, type, html) {
+        if(type == 'product'){
+                    i = 0;
+                    $.each(arr, function(index, item) {
+                        if(i==0)
+                            html += "<input type='radio' lay-skin='primary'  class='layui-input' lay-filter='productid' name='" + type + "id' value='"+item.id+"' title='" +item[type] +"' checked>"
+                        else
+                            html += "<input type='radio' lay-skin='primary' class='layui-input' lay-filter='productid' name='" + type + "id' value='"+item.id+"' title='" +item[type] +"'>"
+                        i++
+                    })
+                }else{
+                    if (type == 'station') {
+                        html = '<option value="">Select the Station</option>';
+                    } 
+
+                    $.each(arr, function(index, item) {
+                        html += "<option value='" + item
+                            .station + "'>" + item[type] + "</option>"
+
+                    })
+                }
+                return html;
+      }
+
+    var id= window.location.search.slice(1).split('?')[0].split('=')[1];
+    //   console.log(id)
+       // 提交事件
+     
+       $.ajax({
+                url: '../manage/filter/filter_handle.php?action=get_filter',
+                type: 'get',
+                dataType: 'json',
+                success: function(res) {
+                    // console.log(res)
+                    var productHtml =stationHtml='';
+                    productHtml = mapCheck(res.product, 'product', productHtml);
+                    // stationHtml = mapCheck(res.station, 'station', stationHtml)
+                    $('#checkProduct').html(productHtml);
+                    $('#station_select').html(stationHtml);
+                    form.render();
+
+                    $.ajax({
+                            url:'./manage_handle.php?action=search_content',
+                            type:'post',
+                            dataType:'json',
+                            data:{
+                                    id:id
+                            },
+                            success:function(res1){
+                                   console.log(res1)
+                                document.getElementById('head').setAttribute("value",res1[0]['head']);
+                                // document.getElementById('station_name').setAttribute("value",res1[0]['station_name']);
+                                layedit.setContent(laybuild,res1[0]['content']);
+
+                            var newPromise = new Promise(function(resolve){
+                                var productInput = $('#checkProduct').find('input');
+                                for(var i = 0;i<productInput.length;i++){
+                                    var productInputTemp = $(productInput[i]);
+                                    var tempValue = productInputTemp.val();
+                                    if(tempValue==res1[0]['product_id']){
+                                       
+                                        productInputTemp.next().find('i').click();
+                                    }
+                               }
+                              resolve('');
+                           });
+                           newPromise.then(function(resolve){
+                            setTimeout(function(){ 
+                            var stationInput = $('#station_select').next('div').find('dd');
+                            for(var i= 0;i<stationInput.length;i++){
+                                var stationInputTemp = $(stationInput[i]);
+                                var tempValue = stationInputTemp.attr('lay-value');
+                                if(tempValue==res1[0]['station_name']){
+                                  
+                                    stationInputTemp.click();
+                                    
+                                }
+                            }
+
+                           },100)
+                           });
+                            }
+                            
+                        });
+                  
+           
+                   
+                }
+            });
+            form.on('radio(productid)', function (data) {
+                depId = $("[name='productid']:checked").val();
+                // console.log(depId);
+                $.ajax({
+                    url: '../manage/filter/filter_handle.php?action=get_station&depId='+depId,
+                    type: 'get',
+                    dataType: 'json',
+                    success: function(res) {
+                        console.log(res)
+                        var stationHtml = '';
+                       
+                        stationHtml = mapCheck(res.station, 'station', stationHtml)
+                        $('#station_select').html(stationHtml);
+                        form.render();
+                    }
+                });
+            })
+          
+       form.on("submit(*)", function(data) {
+                $('#result').html(syntaxHighlight(data.field));
+                layer.open({
+                    type: 1,
+                    title: '提交信息',
+                    shadeClose: true,
+                    content: $('#result')
+                });
+                return false;
+            });
+            form.on('submit(submitAdd)', function(data) {
+            var head = data.field.head;
+            var content=layedit.getContent(laybuild);
+            var  product_id=data.field.productid;
+            var station_name=data.field.station;
+           
+            // console.log(content);
+           if(head==''|content==''){
+               alert("please input content!")
+           }else{ $.ajax({
+                url: './manage_handle.php?action=edit',
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    head:head,
+                    content:content,
+                    id:id,
+                    product_id:product_id,
+                    station_name:station_name
+                },
+                success: function(res) {
+                    if (res == 'success') {
+                            alert('Update success!')
+                           location.href="station_introduction.html";
+                        }else{
+                            alert('Update fail!')
+                        }
+                    }
+                
+            });}
+           
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+            });
+       
+            function syntaxHighlight(json) {
+                if (typeof json != 'string') {
+                    json = JSON.stringify(json, undefined, 2);
+                }
+                json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                return json.replace(
+                    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+                    function(match) {
+                        var cls = 'number';
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'key';
+                            } else {
+                                cls = 'string';
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'boolean';
+                        } else if (/null/.test(match)) {
+                            cls = 'null';
+                        }
+                        return '<span class="' + cls + '">' + match + '</span>';
+                    });
+            }
+    });
+
+       
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,305 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Add acount</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            width: 30%;
+            margin: 100px auto;
+        }
+        /* #departmentf1, */
+        /* #productf1 {
+            display: none;
+        } */
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <form class="layui-form user_addform">
+            <div class="layui-form-item">
+                <label class="layui-form-label">Username:</label>
+                <div class="layui-input-block">
+                    <input type="text" name="username" required lay-verify="required" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">Password:</label>
+                <div class="layui-input-block ">
+                    <input type="password" name="password" required lay-verify="required" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">
+                    MobilePhone:</label>
+                <div class="layui-input-block">
+                    <input type="text" name="long_phone" required autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">ShortPhone:</label>
+                <div class="layui-input-block">
+                    <input type="text" name="phone" required autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">Email:</label>
+                <div class="layui-input-block">
+                    <input type="text" name="email" required lay-verify="required" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <!-- <div class="layui-form-item" id='leveal'>
+                <label class="layui-form-label">Level:</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="level" class='leveal' value="0" title="Guest" checked>
+                    <input type="radio" name="level" class='leveal' value="2" title="Customer">
+                </div>
+            </div> -->
+            <!-- <div class="layui-form-item" id='department'>
+                <label class="layui-form-label">Department:</label>
+                <div class="layui-input-block" class='departmentdiv'>
+                    <select name="group" lay-verify="required" class='department'>
+					</select>
+                </div>
+            </div> -->
+            <div class="layui-form-item" id='department'>
+                <label class="layui-form-label">Department:</label>
+                <div class="layui-input-block">
+                    <select name="group" lay-verify="required" class='department'>
+						</select>
+                </div>
+            </div>
+            <!-- <div class="layui-form-item" id='product'>
+                <label class="layui-form-label">Product:</label>
+                <div class="layui-input-block">
+                    <select name="product" lay-verify="required" class='product'>
+					</select>
+                </div>
+            </div> -->
+            <div class="layui-form-item" id='product'>
+                <label class="layui-form-label">Product:</label>
+                <div class="layui-input-block product">
+                </div>
+            </div>
+
+
+            <div class="layui-form-item" id='project'>
+                <label class="layui-form-label">Project:</label>
+                <div class="layui-input-block project">
+                </div>
+            </div>
+
+ 
+
+
+
+
+            <div class="layui-form-item" id='leader'>
+                <label class="layui-form-label">Leader:</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="group_category" class='leader' value="1" title="Yes" checked>
+                    <input type="radio" name="group_category" class='leader' value="2" title="No">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn taskbtn" lay-submit lay-filter="add">Submit</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <!-- <script src='../js/account_add.js'></script> -->
+    <script type="text/javascript">
+        // 动态获取department和product
+        var get_product_group;
+        $.ajax({
+            async: false,
+            type: "get",
+            url: "../admin/handle.php?action=get_product_group",
+            dataType: "json",
+            success: function(response) {
+
+                get_product_group = response;
+                var groupstr = "";
+                // var groupstr1 = "";
+                var productstr = "";
+                // var productstr1 = "";
+                for (var i = 0; i < response['group'].length; i++) {
+                    groupstr = "<option value='" + response['group'][i]['id'] + "'>" + response['group'][i]['group'] + "</option>";
+                    $(".department").append(groupstr);
+                }
+                for (var j = 0; j < response['product'].length; j++) {
+                    productstr = "<input type='checkbox' name='product[" + response['product'][j]['id'] + "]'  value='"+response['product'][j]['id'] +"'    lay-skin='primary'   lay-filter='testproduct' id='productApp' title='" + response['product'][j]['product'] + "'>";
+                    $(".product").append(productstr);
+                }
+            }
+        });
+
+
+
+
+
+
+
+
+
+
+        layui.use(['form', 'jquery', 'layer'], function() {
+            var form = layui.form;
+            var $ = layui.jquery;
+            var layer = layui.layer;
+               
+            form.on('checkbox(testproduct)', function (data) {
+                // 获取已经选中的product 
+                var proArr=[];
+                $('input:checkbox[id=productApp]:checked').each(function(){
+                      proArr.push($(this).val());
+                 })
+                if(proArr.length==0){
+                    $(".project").empty();
+                }
+                console.log(proArr);
+                var product_id = data.value; 
+                 // console.log(product_id);
+
+                    $.ajax({
+                    type: 'post',
+                    url: '../admin/user_handle.php?action=get_product_project',
+                    data: {
+                        product_id:product_id,
+                        productArr:proArr
+                    },
+
+               
+                    dataType: 'json',
+                    success: function(response) {
+                        $(".project").empty();
+
+                        console.log(response);
+                         
+                        for (var j = 0; j < response.length; j++) {
+                          projectstr = "<input type='checkbox' name='project[" + response[j]['id'] + "]'  value='"+response[j]['id'] +"'    lay-skin='primary' id='projectApp' title='" + response[j]['project'] + "'>";
+                        $(".project").append(projectstr);
+                       }
+
+                       form.render('checkbox')
+                
+                    }
+                });
+
+   
+
+            });
+
+
+
+
+
+            //监听提交
+            form.on('submit(add)', function(data) {
+
+                var proArr=[];
+                $('input:checkbox[id=productApp]:checked').each(function(){
+                      proArr.push($(this).val());
+                 })
+                if(proArr.length==0){
+                    alert("Products  are empty");
+                    return false ;
+                }
+               
+                var projectArr=[];
+                $('input:checkbox[id=projectApp]:checked').each(function(){
+                      projectArr.push($(this).val());
+                 })
+                if(projectArr.length==0){
+                    alert("Projects  are empty");
+                    return false ;
+                }
+
+
+
+
+
+
+                data = data.field;
+
+                console.log(data);
+                // return false;
+          
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/user_handle.php?action=add_account',
+                    data: data,
+                    // cache: false,
+                    // async: false,
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res == 'success') {
+                            layer.msg('success', {
+                                icon: 1
+                            })
+                            setTimeout(function() {
+                                parent.location.href = './manage_main.html'
+                            }, 1000);
+                        } else if (res == 'fail') {
+                            layer.msg('fail', {
+                                icon: 5
+                            })
+                            setTimeout(function() {
+                                parent.location.reload();
+                            }, 1000);
+                        } else {
+                            layer.msg('exist', {
+                                icon: 5
+                            })
+                            setTimeout(function() {
+                                parent.location.reload();
+                            }, 1000);
+                        }
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+</body>
+
+</html>

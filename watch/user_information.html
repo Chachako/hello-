@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>User information</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+     .sp-grid-import{border-collapse: collapse;width:70%; border:0px solid #E1E6EB; border-left:none;margin:20px auto}
+        .sp-grid-import thead th{line-height:20px;padding:8px 12px; white-space: nowrap; text-align:left; font-weight:normal !important;letter-spacing:1px;}
+        /* .sp-grid-import tbody td{text-align: left;line-height:20px;padding:8px 10px;font-size:13px;border-bottom:1px solid #E1E6EB; border-left:0px solid #E1E6EB;} */
+
+        .save{
+            position: absolute;
+            left: 45%;
+        }
+      
+    </style>
+</head>
+
+<body>
+    <h2 style='text-align:center;margin:10px 0'>User Information</h2>
+    <table class='sp-grid-import'>
+        <thead>
+            <tr>
+                <th>UserName</th>
+                <th class='username' >
+                        <input type="text" name='username' style='width:200px' class="username layui-input" readonly>
+                </th>
+            </tr>
+            <tr>
+                <th>Group</th>
+                <th class='group'>
+                        <input type="text" name='group' style='width:200px' class="group layui-input" readonly>
+                </th>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <th><input type="text" name='email' style='width:200px' class="email layui-input"></th>
+            </tr>
+            <tr>
+                <th>Short Number</th>
+                <th><input type='text' name='phone' style='width:200px' class='phone layui-input'></th>
+            </tr>
+            <tr>
+                <th>Long Number</th>
+                <th><input type='text' name='long_phone' style='width:200px' class='long_phone layui-input'></th>
+            </tr>
+        </thead>
+    </table>
+    <button class="layui-btn layui-btn-normal save">Save</button>
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script src='../js/index.js'></script>
+    <script src='../layui/x-layui.js'></script>
+    <script>
+        layui.use(['form', 'layer', 'element', 'laydate', 'upload', 'upload', 'rate', 'jquery'], function () {
+            var form = layui.form;
+            var $ = layui.jquery;
+            var upload = layui.upload;
+            var laydate = layui.laydate;
+            var layer = layui.layer;
+            rate = layui.rate;
+            $.ajax({
+                    type: "post",
+                    url: "./public_handle.php?action=personal_info",
+                    dataType: "json",
+                    success:function(res){
+                        $('.username').val(res[0]['username']);
+                        $('.group').val(res[0]['group']);
+                        $('.email').val(res[0]['email']);
+                        $('.phone').val(res[0]['phone']);
+                        $('.long_phone').val(res[0]['long_phone']);
+                    }
+                })
+            $('.save').click(function(){
+                $.ajax({
+                    type: "post",
+                    url: "./public_handle.php?action=update_userinfo",
+                    data:{
+                        'email':  $('.email').val(),  
+                        'phone':  $('.phone').val(), 
+                        'long_phone':  $('.long_phone').val(), 
+                    },
+                    dataType: "json",
+                    success:function(res){
+                        if(res == 'success'){
+                            layer.msg(res,{
+                                icon:1,
+                                time:1000
+                            })
+                        }
+                        
+                    }   
+                })
+            })
+        })
+    </script>
+</body>
+
+</html>

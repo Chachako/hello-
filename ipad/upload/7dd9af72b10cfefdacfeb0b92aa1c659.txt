@@ -1,0 +1,8 @@
+LCMSN Validation
+Validation0:	The SN is NULL    —>    LCM SN using SFC data(first 17 bits)
+Validation1: 	The SN length of LCM is 17 and consistent with SFC    —>    Continue and show PASS
+Validation2: 	The SN length of LCM is 17 and inconsistent with SFC    —>    LCM SN using SFC data(first 17 bits)
+Validation3:	The SN length of LCM is 70 and consistent with SFC    —>    Cut the first 17 bits of LCM SN and add CFG# into unit.
+Validation4: 	The SN length of LCM is 80 and consistent with SFC    —>    Cut the first 17 bits of LCM SN and add CFG# into unit.
+Validation5: 	The SN length of LCM is not 17, 70 and 80, but the first 17 bits are consistent with SFC    —>    Cut the first 17 bits of LCM SN and add CFG# into unit.(Equivalent to using SFC data directly)
+Validation6: 	The SN length of LCM is not 17, 70 and 80 and the first 17 bits are inconsistent with SFC    —>    LCM SN using SFC data(first 17 bits)

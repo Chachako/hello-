@@ -1,0 +1,267 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>product_add</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        #box{
+			margin-left: 25%;
+			width: 800px;
+		}
+	</style>
+</head>
+
+<body>
+    <div id="box">
+        <button onclick="addBtn()" id="addBtn" class="layui-btn layui-btn-warm layui-btn-sm">Add</button>
+        <table style="margin-left:300px;" id="usedTable" lay-filter="used"></table>
+    </div>
+
+    <script type="text/html" id="barDemo">
+        {{#  if(d.enable == 1){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="forbidden_product" style='background:red; width: 65px'>Forbidden</a>
+        {{#  }else if(d.enable== 0){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="renew_product" style='background:green; width: 65px'>Renew</a>
+        {{# } }}
+	</script>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script type="text/javascript">
+        layui.use(['element', 'table', 'form', 'jquery', 'layer', 'laypage'], function () {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+
+            // 表格渲染
+            table.render({
+                elem: '#usedTable',
+                url: '../admin/handle.php?action=get_product_list', //数据接口
+                id: 'usedTable',
+                height: 'auto',
+                width: 800,
+                align: 'center',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 30],
+                cols: [
+                    [{
+                            field: 'id',
+                            width: '40%',
+                            align: 'center',
+                            title: 'ID',
+                            sort: true,
+                            fixed: 'left',
+                            templet: '#titleid'
+                        },
+                        {
+                            field: 'product',
+                            width: '40%',
+                            align: 'center',
+                            title: 'Product'
+                        },
+                        {
+                            field: 'enable',
+                            align: 'center',
+                            title: 'Enable',
+                            templet: '#status',
+                            hide: true
+                        },
+                        { 
+                            fixed: 'right', 
+                            align: 'center', 
+                            title: 'Action', 
+                            toolbar: '#barDemo',
+                         }
+                    ]
+                ]
+            });
+
+
+
+
+            // 监听工具条
+            table.on('tool(used)', function (obj) {
+                var data = obj.data;
+                var layEvent = obj.event;
+                var tr = obj.tr;
+
+                if (layEvent === 'forbidden_product') {
+                    layer.confirm('Are you sure?', function(index){
+                       $.ajax({
+                           type: 'post',
+                           url: '../admin/handle.php?action=forbidden_product',
+                           data: data,
+                           cache: false,
+                           dataType: 'json',
+                           success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+
+                if (layEvent === 'renew_product') {
+                    layer.confirm('Are you sure?', function(index){
+                       $.ajax({
+                           type: 'post',
+                           url: '../admin/handle.php?action=renew_product',
+                           data: data,
+                           cache: false,
+                           dataType: 'json',
+                           success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+                // if (layEvent === 'edit') {
+                //     layer.open({
+                //         type: 1,
+                //         title: '编辑',
+                //         area: '500px;',
+                //         anim: 1,
+                //         id: 'btn_edit',
+                //         moveType: 1,
+                //         content: $('#editForm'),
+                //         success: function (layer, index) {
+                //             $('#usedid').val(data.id);
+                //             $('#usedname').val(data.used_area);
+                //             $.ajax({
+                //                 url: '../admin/equip/equip_list.php',
+                //                 type: 'get',
+                //                 dataType: 'json',
+                //                 success: function (res) {
+                //                     var html = '';
+                //                     var categorys = data.category
+                //                     $.each(res.data, function (i, val) {
+                //                         if (categorys.indexOf(val.name) !=
+                //                             -1) {
+                //                             html +=
+                //                                 '<input type="checkbox" name="like[' +
+                //                                 val.name + ']" id="' +
+                //                                 val.name +
+                //                                 '" checked title="' +
+                //                                 val.name + '">';
+                //                         } else {
+                //                             html +=
+                //                                 '<input type="checkbox" name="like[' +
+                //                                 val.name + ']" id="' +
+                //                                 val.name + '" title="' +
+                //                                 val.name + '">';
+                //                         }
+                //                     })
+                //                     $('#editGategory').html(html);
+                //                     form.render();
+                //                 }
+                //             })
+                //         }
+                //     })
+                // }
+            });
+
+            // 新增按钮
+            addBtn = function () {
+                var title = true;
+             
+                layer.open({
+                    type: 1,
+                    title: 'Add',
+                    area: '500px;',
+                    anim: 1, //弹出动画
+                    id: 'btn_add',
+                    moveType: 1,
+                    // shade: 0.8,
+                    content: $('#addForm')
+                })
+            }
+
+            form.on('submit(addform)', function (data) {
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/handle.php?action=add_product',
+                    data: $("#addForm").serialize(),
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data == 'success') {
+                            table.reload('usedTable')
+                            layer.closeAll();
+
+                            // location.href = "./account_list.html";
+                        } else if (data == 'fail') {
+                            alert('添加失败！')
+                        } else {
+                            alert('该用户已存在，无法添加')
+                        }
+                    }
+                });
+                // return false;
+            });
+
+        })
+    </script>
+    <script type="text/html" id="titleid">
+        {{d.LAY_INDEX}}
+	</script>
+    <script type="text/html" id="category">
+        {{#  layui.each(d.category.split('|'), function(index, item){ }}
+		   <span class="layui-badge">{{ item }}</span>
+		{{#  }) }}
+	</script>
+    <form class="layui-form" id="addForm" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Product:</label>
+            <div class="layui-input-inline">
+                <input type="text" id="product" name="product" required lay-verify="required" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addform">Submit</button>
+            </div>
+        </div>
+</body>
+
+</html>

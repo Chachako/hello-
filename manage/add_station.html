@@ -1,0 +1,301 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>add_station</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        #box {
+            margin-left: 25%;
+            width: 800px;
+        }
+        
+        .layui-input-block {
+            margin-top: 15px
+        }
+        
+        .layui-input-block>.layui-form-select {
+            width: 190px
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="box">
+        <button onclick="addBtn()" id="addBtn" class="layui-btn layui-btn-warm layui-btn-sm">Add</button>
+        <table style="margin-left:300px;" id="usedTable" lay-filter="used"></table>
+    </div>
+
+
+
+    <script type="text/html" id="barDemo">
+        <!-- <a class="layui-btn layui-btn-xs" lay-event="deleteStation" style='background:red'>Delete</a> -->
+        {{#  if(d.enable == 1){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="forbidden_station" style='background:red; width: 65px'>Forbidden</a>
+        {{#  }else if(d.enable== 0){ }}
+            <a class="layui-btn layui-btn-xs" lay-event="renew_station" style='background:green; width: 65px'>Renew</a>
+        {{# } }}
+    </script>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script type="text/javascript">
+        layui.use(['element', 'table', 'form', 'jquery', 'layer', 'laypage'], function() {
+            var $ = layui.jquery;
+            var element = layui.element;
+            var form = layui.form;
+            var upload = layui.upload;
+            var laypage = layui.laypage;
+            var layer = layui.layer;
+            var table = layui.table;
+
+            // 表格渲染
+            table.render({
+                elem: '#usedTable',
+                url: '../admin/handle.php?action=get_station_list', //数据接口
+                id: 'usedTable',
+                height: 'auto',
+                width: 800,
+                align: 'right',
+                loading: true,
+                page: true,
+                limit: 20,
+                limits: [20, 30, 50],
+                cols: [
+                    [{
+                        field: 'id',
+                        width: '8%',
+                        align: 'center',
+                        title: 'ID',
+                        sort: true,
+                        fixed: 'left',
+                        templet: '#titleid'
+                    },
+                     {
+                        field: 'station',
+                         // width: '10%',
+                        align: 'center',
+                        title: 'Station',
+                         hide: true
+                    },
+
+                       {
+                        field: 'projectName',
+                        width: '40%',
+                        align: 'center',
+                        title: 'Project'
+                    },
+
+                    {
+                        field: 'stationName',
+                        width: '40%',
+                        align: 'center',
+                        title: 'Station'
+                    },
+                    {
+                        field: 'enable',
+                        align: 'center',
+                        title: 'Enable',
+                        templet: '#status',
+                        hide: true
+                    },
+                 
+                     { 
+                         fixed: 'right', 
+                         align: 'center', 
+                         title: 'Action', 
+                         toolbar: '#barDemo',
+                     }
+                    ]
+                ]
+            });
+
+            table.on('tool(used)',function(obj){
+                var data = obj.data;
+
+                // console.log(data);
+                var layEvent = obj.event;
+                var tr = obj.tr;
+                if (layEvent==='forbidden_station') {
+                    layer.confirm('Are you sure?',function(index){
+                        $.ajax({
+                            type: 'post',
+                            url: '../admin/handle.php?action=forbidden_station',
+                            data: data,
+                            cache: false,
+                            dataType: 'json',
+                            success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+                if (layEvent==='renew_station') {
+                    layer.confirm('Are you sure?',function(index){
+                        $.ajax({
+                            type: 'post',
+                            url: '../admin/handle.php?action=renew_station',
+                            data: data,
+                            cache: false,
+                            dataType: 'json',
+                            success: function(data) {
+                                if (data== 'success') {
+                                    table.reload('usedTable')
+                                    layer.closeAll();
+                                }else{
+                                    alert('fail');
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+
+
+
+
+
+
+
+
+            // 监听编辑提交按钮
+            form.on('submit(editform)', function(data) {
+                var datas = data.field;
+                $.post({
+                    async: true,
+                    url: "../admin/handle.php?action=add_product",
+                    type: "post",
+                    data: datas,
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.code == 200) {
+                            table.reload('usedTable')
+                            layer.closeAll();
+                        }
+                    },
+                    error: function() {
+                        console.log('修改失败');
+                    }
+                })
+            });
+
+            form.on('submit(addform)', function(data) {
+                var datas = data.field;
+                console.log(datas);
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/handle.php?action=add_station',
+                    data: datas,
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data == 'success') {
+                            table.reload('usedTable')
+                            layer.closeAll();
+
+                            // location.href = "./account_list.html";
+                        } else if (data == 'fail') {
+                            alert('添加失败！')
+                        } else {
+                            alert('已存在，无法添加')
+                        }
+                    }
+                });
+                // return false;
+            });
+
+            // 新增按钮
+            addBtn = function() {
+                $.ajax({
+                    type: 'post',
+                    url: '../admin/handle.php?action=get_project',
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function(response) {
+                        $("select[name='project']").html("");
+                        var project = "";
+                        console.log(response.length);
+                        for (var n = 0; n < response.length; n++) {
+                            project = "<option value='" + response[n]['id'] + "'> " + response[n]['project'] + "</option>"
+                            $("select[name='project']").append(project);
+                        }
+                        form.render('select');
+                    }
+                });
+
+                var title = true;
+                layer.open({
+                    type: 1,
+                    title: 'Add',
+                    area: ['410px', '400px '],
+                    anim: 1, //弹出动画
+                    id: 'btn_add',
+                    moveType: 1,
+                    content: $('#addForm')
+                })
+            }
+
+        })
+    </script>
+    <script type="text/html" id="titleid">
+        {{d.LAY_INDEX}}
+    </script>
+    <script type="text/html" id="category">
+        {{# layui.each(d.category.split('|'), function(index, item){ }}
+        <span class="layui-badge">{{ item }}</span> {{# }) }}
+    </script>
+    <form class="layui-form" id="addForm" onsubmit="return false;" style="display:none;">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Project</label>
+            <div class="layui-input-block">
+                <select name="project">
+              </select>
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:20px;">
+            <label class="layui-form-label">Station:</label>
+            <div class="layui-input-inline">
+                <input type="text" id="station" name="station" required lay-verify="required" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addform">Submit</button>
+            </div>
+        </div>
+    </form>
+</body>
+
+</html>

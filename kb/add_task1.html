@@ -1,0 +1,1454 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>
+        Tasl_list
+    </title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="../easyui/demo.css">
+    <script src='../js/jquery.js'></script>
+    <script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+    <style>
+        html,body{
+            height: 100%;
+            background: #f3f7fb
+        }
+        .user_id{
+           display: none;
+         }
+         .new-task{
+             margin-top:50px;
+             border-left: 1px solid #ccc;
+             border-right: 1px solid #ccc;
+             padding: 30px 0;
+             /* height: calc(90% - 10px); */
+            background: #fff;
+             box-shadow: 0 12px 16px 0 rgba(0,0,0,.12);
+         }
+         #demoList{
+             text-align: center;
+         }
+         .ulcom{
+             height:200px;
+             overflow-y: scroll;
+         }
+         .progressbar{
+             display: none;
+             width:50%;
+             margin-left:20%
+         }
+         .textbox {
+             border:1px solid #ccc;
+             border-radius: 0%;
+             width:190px!important
+         }
+         .combo-arrow {
+            background: url(../img/arrow-down.png) no-repeat center center;
+        }
+        .combo-arrow:hover {
+            background-color: #fff;
+        }
+       .textbox-text{
+           height:35px!important;
+           line-height: 35px!important;
+       }
+       #assign_user{
+       display: none;
+       }
+       #sync_assign_user{
+        display: none;
+       }
+       .layui-form-switch{
+           margin-left:50px;
+       }
+       .sync_wrap{
+           display: none;
+       }
+       .layui-upload .layui-table{
+           width:78%;
+           margin-left:87px;
+       }
+      /* .task_add{
+
+       } */
+
+        /* 媒体查询 */
+       @media (max-width: 1700px) {
+        .new-task {
+            width: 1000px;
+        }
+       }
+       @media (max-width: 1600px) {
+        .new-task {
+            width: 1000px;
+        }
+       }
+        @media (max-width: 1400px) {
+        .new-task {
+            width: 1000px;
+        }
+        }
+       @media (max-width: 900px) {
+        .new-task {
+            width: 900px;
+        }        
+       
+}
+    </style>
+</head>
+
+<body>
+    <div class="new-task">
+        <p class='user_id'>
+            <?php echo $_SESSION['cooper_user_info'][0]['id'];?>
+        </p>
+        <form class="layui-form task_add" action="">
+            <div class="layui-form-item layui-form" lay-filter='product'>
+                <label class="layui-form-label formleft">Product:</label>
+                <div class="layui-input-inline" >
+                    <select name="product_id" required lay-verify="required" class='productselect' lay-filter='selectProduct'>
+                    </select>
+                </div>
+
+                <label class="layui-form-label">Synchronization:</label>
+                <div class="layui-input-inline" style='width:100px'>
+                    <input type="checkbox" name="switch" lay-skin="switch" lay-filter="synch" class='syn'>
+                </div>
+                <div class="sync_wrap">
+                    <label class="layui-form-label">Product:</label>
+                    <div class="layui-input-inline">
+                        <select name="sync_product" class='productinput1' lay-filter='sync_product' readonly>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="layui-form-item layui-form" lay-filter='project'>
+                <label class="layui-form-label formleft">Project:</label>
+                <div class="layui-input-inline">
+                    <select name="project_id" required lay-verify="required" class='projectselect' lay-filter='selectProject' >
+                    </select>
+                </div>
+                <div class="sync_wrap">
+                    <label class="layui-form-label" style='margin-left:189px'>Project:</label>
+                    <div class="layui-input-inline">
+                        <select name="sync_project" class='sync_project' lay-filter='sync_project'>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="layui-form-item">
+                <label class="layui-form-label formleft">Stage:</label>
+                <div class="layui-input-inline builddiv divcom">
+                    <input type="text" name="build" required lay-verify="required" autocomplete="off" class="layui-input  formright buildinput inputcom"
+                        id='buildinput'>
+                    <img src='../img/arrow-down.png' class='arrpng' id='buildpng'>
+                    <ul class='ulcom' id='buildul'>
+                    </ul>
+                </div>
+                <div class="sync_wrap">
+                    <label class="layui-form-label" style='margin-left:189px'>Stage:</label>
+                    <div class="layui-input-inline builddiv1 divcom">
+                        <input type="text" name="sync_build" autocomplete="off" class="layui-input  formright buildinput1 inputcom"
+                            id='buildinput1'>
+                        <img src='../img/arrow-down.png' class='arrpng' id='syn_buildpng'>
+                        <ul class='ulcom' id='syn_buildul'>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+            <div class="layui-form-item layui-form" lay-filter='station' >
+                <label class="layui-form-label formleft">Station:</label>
+                <div class="layui-input-inline">
+                    <input class="easyui-combobox station" id='stationinput' />
+                </div>
+                <div class="sync_wrap">
+                    <label class="layui-form-label" style='margin-left:189px'>Station:</label>
+                    <div class="layui-input-inline">
+                        <input class="easyui-combobox" id='stationinput1' />
+                    </div>
+                </div>
+
+            </div>            
+
+            <div class="layui-form-item">
+                <label class="layui-form-label formleft">To:</label>
+                <div class="layui-input-block layui-form assign">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div id='assign_user'>
+                    <label class="layui-form-label formleft"></label>
+                    <div class="layui-input-inline">
+                        <table class="layui-table">
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id='sync_assign_user'>
+                    <label class="layui-form-label"></label>
+                    <div class="layui-input-inline" style='margin-left:190px'>
+                        <table class="layui-table">
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label formleft">Requestor:</label>
+                <div class="layui-input-inline">
+                    <select name="Requestor" required lay-verify="required" class='Requestor' id='Requestorinput'>
+                    </select>
+                </div>
+                 <label class="layui-form-label" style='margin-left:189px'>F1 DRI:</label>
+                  <div class="layui-input-inline">
+                    <input class="easyui-combobox apple_DRI" id='appleDRIinput' />
+                  </div>      
+
+             </div>
+
+            <div class="layui-form-item">
+
+
+                <label class="layui-form-label formleft " >Priority:</label>
+                <div class="layui-input-inline">
+                        <select name="Priority" required lay-verify="required" class='Priority' lay-filter='Priority'>
+                            <option value='Normal'>Normal</option>
+                            <option value='Low'>Low</option>
+                            <option value='High'>High</option>
+                       </select>
+                </div>
+
+
+                
+                <label class="layui-form-label " style='margin-left:189px'>ETA:</label>  
+                <div class="layui-input-inline">              
+                    <input type="text" class="layui-input" id="test5" placeholder="yyyy-MM-dd HH:mm:ss" name='eta' class='eta'>
+                </div>
+
+             
+               <!--  <div class="layui-input-inline">
+                    <select name="apple_DRI" required lay-verify="required" class='appleDRIselect' lay-filter='appleDRI'>
+                    </select>
+                </div>
+             -->
+
+
+               
+
+            </div>
+
+
+
+            <div class="layui-form-item">
+                <label class="layui-form-label formleft">Task:</label>
+                <div class="layui-input-block">
+                    <input type="text" name="task_title" required lay-verify="required" autocomplete="off" class="layui-input  formright task_title">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text ">
+                <label class="layui-form-label formleft">Task Description:</label>
+                <div class="layui-input-block">
+                    <textarea name="task_description" class="layui-textarea  formright task_description" required
+                        lay-verify="required"></textarea>
+                </div>
+            </div>
+            <div class="layui-upload">
+                <button type="button" class="layui-btn layui-btn-normal" id="testList" style='margin-left:81px'>Add
+                    Files</button>
+                <div class="layui-upload-list">
+                    <table class="layui-table">
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>Size</th>
+                                <!-- <th>状态</th> -->
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="demoList"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="layui-progress layui-progress-big progressbar" lay-showpercent="true" lay-filter="demo" style='margin-bottom:10px'>
+                <div class="layui-progress-bar layui-bg-red" lay-percent="0%"></div>
+            </div>
+            <div class="layui-form-item" style='margin:50px 0 0 197px'>
+                <div class="layui-input-block">
+                    <button class="layui-btn taskbtn site-demo-active" lay-filter="add" id="fileListAction">Submit</button>
+                    <button class="layui-btn layui-btn-primary back_btn">Cancel</button>
+                    <button class="layui-btn layui-btn reset_btn">Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src='../layui/layui.js'></script>
+    <!-- <script src='../js/index.js'></script> -->
+    <script>
+        // -----------重载当前添加页面----------
+        $('.reset_btn').click(function () {
+            layui.sessionData('form_value', null);
+            location.href = './add_task.html'
+        })
+        layui.use(['form', 'layer', 'element', 'laydate', 'upload', 'upload'], function () {
+            var form = layui.form,
+                upload = layui.upload,
+                laydate = layui.laydate,
+                $ = layui.jquery,
+                element = layui.element;
+            //选择station和assign获取负责人信息函数
+            function show_user(station, assign_id, project_id, synch_station, sync_project) {
+                if ($(".syn").is(':checked')) { //同步打开
+                    $.ajax({
+                        type: "post",
+                        url: "./create_task.php?action=station_search",
+                        dataType: "json",
+                        data: {
+                            'assign': assign_id,
+                            'station': station,
+                            'sync_station': synch_station,
+                            'sync': $(".syn").is(':checked'),
+                            'project': project_id,
+                            'sync_project': sync_project
+                        },
+                        success: function (res) {
+                            if (res['station']) {
+                                $('#assign_user').show()
+                                $('#assign_user tbody').html("");
+                                var assign_table = ""
+                                for (var i = 0; i < res['station'].length; i++) {
+                                    if (res['station'][i]['name'] != undefined) {
+                                        var assign_name = res['station'][i]['name'].replace(/ /g,
+                                            '_');
+                                        assign_table = "<tr><td style='padding:0 10px'>" + res[
+                                                'station'][i]['name'] +
+                                            "</td><td><select name='assign_user_select' style='display: block; min-width:80px' class='assign" +
+                                            assign_name +
+                                            "'><option value='0'>-----</option></select></td></tr>";
+                                        $('#assign_user tbody').append(assign_table);
+                                        var assign_option = "";
+                                        $('.assign_user_list').html("");
+                                        for (var j = 0; j < res['station'][i]['user_list'].length; j++) {
+                                            if (res['station'][i]['user_list'][j]['checked'] == '1') {
+                                                assign_option = "<option value='" + res['station'][
+                                                        i
+                                                    ]['user_list'][j]['id'] + "' selected>" + res[
+                                                        'station'][i]['user_list'][j]['username'] +
+                                                    "</option>";
+                                            } else if (res['station'][i]['user_list'][j]['checked'] ==
+                                                '2') {
+                                                assign_option = "<option value=" + res['station'][i]
+                                                    ['user_list'][j]['id'] + ">" + res['station'][i]
+                                                    ['user_list'][j]['username'] + "</option>";
+                                            }
+                                            $('.assign' + assign_name).append(assign_option)
+                                        }
+                                    }
+
+                                }
+                            }
+                            if (res['sync_station']) {
+                                $('#sync_assign_user').show()
+                                $('#sync_assign_user tbody').html("");
+                                var sync_assign_table = ""
+                                for (var i = 0; i < res['sync_station'].length; i++) {
+                                    if (res['sync_station'][i]['name'] != undefined) {
+                                        var assign_name = res['sync_station'][i]['name'].replace(
+                                            / /g, '_');
+                                        sync_assign_table = "<tr><td style='padding:0 10px'>" + res[
+                                                'sync_station'][i]['name'] +
+                                            "</td><td><select name='sync_assign_user_select' style='display: block; min-width:80px' class='sync_assign" +
+                                            assign_name +
+                                            "'><option value='0'>-----</option></select></td></tr>";
+                                        $('#sync_assign_user tbody').append(sync_assign_table);
+                                        var sync_assign_option = "";
+                                        for (var j = 0; j < res['sync_station'][i]['user_list'].length; j++) {
+
+                                            if (res['sync_station'][i]['user_list'][j]['checked'] ==
+                                                '1') {
+                                                sync_assign_option =
+                                                    "<option style='background:#666' value='" + res[
+                                                        'sync_station'][i]['user_list'][j]['id'] +
+                                                    "' selected>" + res['sync_station'][i][
+                                                        'user_list'
+                                                    ][j]['username'] + "</option>";
+                                            } else if (res['sync_station'][i]['user_list'][j][
+                                                    'checked'
+                                                ] == '2') {
+                                                sync_assign_option = "<option value=" + res[
+                                                        'sync_station'][i]['user_list'][j]['id'] +
+                                                    ">" + res['sync_station'][i]['user_list'][j][
+                                                        'username'
+                                                    ] + "</option>";
+                                            }
+                                            // console.log(sync_assign_option)
+                                            $('.sync_assign' + assign_name).append(
+                                                sync_assign_option)
+                                        }
+                                    }
+
+                                }
+                            }
+                            if (!res['station']) {
+                                $('#assign_user tbody').html("");
+                            }
+                            if (!res['sync_station']) {
+                                $('#sync_assign_user tbody').html("");
+                            }
+                        }
+                    })
+                } else {
+                    $.ajax({
+                        type: "post",
+                        url: "./create_task.php?action=station_search",
+                        dataType: "json",
+                        data: {
+                            'assign': assign_id,
+                            'station': station,
+                            'project': project_id
+                        },
+                        success: function (res) {
+                            console.log(res)
+                            if (res['station']) {
+                                $('#assign_user').show()
+                                $('#assign_user tbody').html("");
+                                var assign_table = ""
+                                for (var i = 0; i < res['station'].length; i++) {
+                                    if (res['station'][i]['name'] != undefined) {
+                                        var assign_name = res['station'][i]['name'].replace(/ /g,
+                                            '_');
+                                        assign_table = "<tr><td style='padding:0 10px'>" + res[
+                                                'station'][i]['name'] +
+                                            "</td><td><select name='assign_user_select' style='display: block; min-width:80px' class='assign" +
+                                            assign_name +
+                                            "'><option value='0'>-----</option></select></td></tr>";
+                                        $('#assign_user tbody').append(assign_table);
+                                        var assign_option = "";
+                                        $('.assign_user_list').html("");
+                                        for (var j = 0; j < res['station'][i]['user_list'].length; j++) {
+                                            if (res['station'][i]['user_list'][j]['checked'] == '1') {
+                                                assign_option = "<option value='" + res['station'][
+                                                        i
+                                                    ]['user_list'][j]['id'] + "' selected>" + res[
+                                                        'station'][i]['user_list'][j]['username'] +
+                                                    "</option>";
+                                            } else if (res['station'][i]['user_list'][j]['checked'] ==
+                                                '2') {
+                                                assign_option = "<option value=" + res['station'][i]
+                                                    ['user_list'][j]['id'] + ">" + res['station'][i]
+                                                    ['user_list'][j]['username'] + "</option>";
+                                            }
+                                            $('.assign' + assign_name).append(assign_option)
+                                        }
+                                    }
+
+                                }
+                            } else {
+                                $('#assign_user tbody').html("");
+                            }
+                        }
+                    })
+                }
+            }
+            //station失去焦点
+            function station_blur(station, assign_id, project_id, flag) {
+                if (flag == 1) { //非同步
+                    $.ajax({
+                        type: "post",
+                        url: "./create_task.php?action=station_search1",
+                        dataType: "json",
+                        // async: false,
+                        data: {
+                            'assign': assign_id,
+                            'station': station,
+                            'project': project_id
+                        },
+                        success: function (res) {
+                           
+                            
+                            if (res['station']) {
+                                $('#assign_user').show()
+                                $('#assign_user tbody').html("");
+                                var assign_table = ""
+                                for (var i = 0; i < res['station'].length; i++) {
+                                    if (res['station'][i]['name'] != undefined) {
+                                        var assign_name = res['station'][i]['name'].replace(/ /g,
+                                            '_');
+                                        assign_table = "<tr><td style='padding:0 10px'>" + res[
+                                                'station'][i]['name'] +
+                                            "</td><td><select name='assign_user_select' style='display: block; min-width:80px' class='assign" +
+                                            assign_name +
+                                            "'><option value='0'>-----</option></select></td></tr>";
+                                        $('#assign_user tbody').append(assign_table);
+                                        var assign_option = "";
+                                        $('.assign_user_list').html("");
+                                        for (var j = 0; j < res['station'][i]['user_list'].length; j++) {
+                                            if (res['station'][i]['user_list'][j]['checked'] == '1') {
+                                                // console.log(res['station'][i]['user_list'][j]['checked'])
+                                                assign_option = "<option value='" + res['station'][
+                                                        i
+                                                    ]['user_list'][j]['id'] + "' selected>" + res[
+                                                        'station'][i]['user_list'][j]['username'] +
+                                                    "</option>";
+                                            } else if (res['station'][i]['user_list'][j]['checked'] ==
+                                                '2') {
+                                                // console.log(res['station'][i]['user_list'][j]['checked'])
+                                                assign_option = "<option value=" + res['station'][i]
+                                                    ['user_list'][j]['id'] + ">" + res['station'][i]
+                                                    ['user_list'][j]['username'] + "</option>";
+                                            } else {
+                                                // console.log('3')
+                                            }
+                                            $('.assign' + assign_name).append(assign_option);
+                                        }
+                                    }
+
+                                }
+                 
+                            } else {
+                                $('#assign_user tbody').html("");
+                            }
+                        }
+                    })
+
+                } else if (flag == 2) { //同步
+                    $.ajax({
+                        type: "post",
+                        url: "./create_task.php?action=station_search2",
+                        dataType: "json",
+                        // async: false,
+                        data: {
+                            'assign': assign_id,
+                            'sync_station': station,
+                            'sync_project': project_id
+                        },
+                        success: function (res) {
+                            if (res['sync_station']) {
+                                $('#sync_assign_user').show()
+                                $('#sync_assign_user tbody').html("");
+                                var sync_assign_table = ""
+                                for (var i = 0; i < res['sync_station'].length; i++) {
+                                    if (res['sync_station'][i]['name'] != undefined) {
+                                        var assign_name = res['sync_station'][i]['name'].replace(
+                                            / /g, '_');
+                                        sync_assign_table = "<tr><td style='padding:0 10px'>" + res[
+                                                'sync_station'][i]['name'] +
+                                            "</td><td><select name='sync_assign_user_select' style='display: block; min-width:80px' class='sync_assign" +
+                                            assign_name +
+                                            "'><option value='0'>-----</option></select></td></tr>";
+                                        $('#sync_assign_user tbody').append(sync_assign_table);
+                                        var sync_assign_option = "";
+                                        for (var j = 0; j < res['sync_station'][i]['user_list'].length; j++) {
+
+                                            if (res['sync_station'][i]['user_list'][j]['checked'] ==
+                                                '1') {
+                                                sync_assign_option =
+                                                    "<option style='background:#666' value='" + res[
+                                                        'sync_station'][i]['user_list'][j]['id'] +
+                                                    "' selected>" + res['sync_station'][i][
+                                                        'user_list'
+                                                    ][j]['username'] + "</option>";
+                                            } else if (res['sync_station'][i]['user_list'][j][
+                                                    'checked'
+                                                ] == '2') {
+                                                sync_assign_option = "<option value=" + res[
+                                                        'sync_station'][i]['user_list'][j]['id'] +
+                                                    ">" + res['sync_station'][i]['user_list'][j][
+                                                        'username'
+                                                    ] + "</option>";
+                                            }
+                                            // console.log(sync_assign_option)
+                                            $('.sync_assign' + assign_name).append(
+                                                sync_assign_option)
+                                        }
+                                    }
+                                  
+                                }
+                                
+                            } else
+                                $('#sync_assign_user tbody').html("");
+
+                        }
+                    })
+                }
+            }
+            $(function () {
+                $('#stationinput').combobox({
+                    onChange: function (newValue, oldValue) {
+                        //alert(newValue);
+                        //alert($("input[name='assign']:checked").val());
+                        if($("input[name='assign']:checked").val()){
+                            var assign_id = $("input[name='assign']:checked").val();
+                            var station = $.trim($('#stationinput').val());
+                            var project_id = $('.projectselect').val()
+                            if ($(".syn").is(':checked')) { //打开同步，点击assign,同时切换同步和非同步user表
+                                var sync_station = $.trim($('#stationinput1').val());
+                                var sync_project = $('.sync_project').val();
+                                if (sync_station == "") {
+                                    return false;
+                                }
+                                show_user(station, assign_id, project_id, sync_station, sync_project);
+
+
+                            } else {
+                                if ($.trim(station) == "") {
+                                    return false;
+                                }
+                                show_user(station, assign_id, project_id);
+                            }
+                        }
+                    }
+                });
+                $('#stationinput1').combobox({
+                    onChange: function (newValue, oldValue) {
+                        //alert(newValue);
+                        //alert($("input[name='assign']:checked").val());
+                        if($("input[name='assign']:checked").val()){
+                            var assign_id = $("input[name='assign']:checked").val();
+                            var station = $.trim($('#stationinput').val());
+                            var project_id = $('.projectselect').val()
+                            if ($(".syn").is(':checked')) { //打开同步，点击assign,同时切换同步和非同步user表
+                                var sync_station = $.trim($('#stationinput1').val());
+                                var sync_project = $('.sync_project').val();
+                                if (sync_station == "") {
+                                    return false;
+                                }
+                                show_user(station, assign_id, project_id, sync_station, sync_project);
+
+
+                            } else {
+                                if ($.trim(station) == "") {
+                                    return false;
+                                }
+                                show_user(station, assign_id, project_id);
+                            }
+                        }
+                    }
+                });
+            });
+            //点击部门显示assign具体人
+            form.on('radio', function (data) {
+                // alert(data.value); //被点击的radio的value值
+                var assign_id = data.value;
+                var station = $.trim($('#stationinput').val());
+                var project_id = $('.projectselect').val()
+                if ($(".syn").is(':checked')) { //打开同步，点击assign,同时切换同步和非同步user表
+                    var sync_station = $.trim($('#stationinput1').val());
+                    var sync_project = $('.sync_project').val();
+                    if (sync_station == "") {
+                        return false;
+                    }
+                    show_user(station, assign_id, project_id, sync_station, sync_project);
+                  
+
+                } else {
+                    if ($.trim(station) == "") {
+                        return false;
+                    }
+                    show_user(station, assign_id, project_id);
+               
+                }
+
+            });
+            //project值改变
+            form.on('select(selectProject)', function (data) {
+                var project_id = data.value;
+                var assign_id = $("input[name='assign']:checked").val();
+                var station = $.trim($('#stationinput').val());
+                var flag = 1;
+                 
+                $.ajax({
+                    type: "post",
+                    url: "./create_task.php?action=create_search",
+                    dataType: "json",
+                    async: false,
+                    data: {
+                        'project_id': project_id,
+                        'user_id': $('.user_id').html()
+                        },
+                        success: function (response) {
+                            $(".buildinput").val("");
+                            $(".builddiv>ul").empty();
+                            for (var m = 0; m < response['build'].length; m++) {
+                            buildstr = "<li class='licom' id='" + response['build'][m]['id'] + "'>" +
+                            response['build'][m]['build'] + "</li>"
+                            $(".builddiv>ul").append(buildstr);
+                          
+                         } 
+
+                        $(".builddiv>ul>li").click(function () {
+                        var build = $(this).text();
+                        $(".buildinput").val(build);
+                        $(".builddiv>ul").hide();
+                        buildflag = true;
+                        })
+                              
+                            }
+                        });
+
+                    if (assign_id && project_id) {
+                        
+                    station_blur(station, assign_id, project_id, flag);
+                    //  $('#sync_assign_user tbody').html("");
+                    // $('#assign_user tbody').html("");
+
+
+                   
+                    }   
+               
+
+                  
+            });
+            //project值改变
+            form.on('select(sync_project)', function (data) {
+                var assign_id = $("input[name='assign']:checked").val()
+                var syn_project = $('.sync_project').val();
+                var station = $.trim($('#stationinput1').val());
+                var flag = 2;
+                // console.log(assign_id + ',' + syn_project + ',' + station)
+               
+
+                    $.ajax({
+                    type: "post",
+                    url: "./create_task.php?action=create_search",
+                    dataType: "json",
+                    async: false,
+                    data: {
+                        'project_id': syn_project,
+                        'user_id': $('.user_id').html()
+                        },
+                        success: function (response) {
+                            $(".buildinput1").val("");
+                            $(".builddiv1>ul").empty();
+                            for (var m = 0; m < response['build'].length; m++) {
+                            buildstr = "<li class='licom' id='" + response['build'][m]['id'] + "'>" +
+                            response['build'][m]['build'] + "</li>"
+                            $(".builddiv1>ul").append(buildstr);
+                          
+                            } 
+
+                            $(".builddiv1>ul>li").click(function () {
+                            var build1 = $(this).text();
+                            $(".buildinput1").val(build1);
+                            $(".builddiv1>ul").hide();
+                            buildflag1 = true;
+                            })
+                         
+                            }
+                        })
+
+
+                        if (assign_id && syn_project) {
+                    station_blur(station, assign_id, syn_project, flag)
+                  
+                }       
+           
+
+            });
+
+            //默认日期晚4小时
+            var curTime = new Date();
+            var addHour = new Date(curTime.setHours(curTime.getHours() + 4));
+            laydate.render({
+                elem: '#test5',
+                type: 'datetime',
+                lang: 'en',
+                value: addHour,
+                min: 0
+            });
+
+            //判断有无SESSION值
+            if (layui.sessionData('form_value').inputval != undefined) {
+                $('.buildinput').val(layui.sessionData('form_value').inputval.build);
+                $('#stationinput').val(layui.sessionData('form_value').inputval.station);
+                $('.task_title').val(layui.sessionData('form_value').inputval.title);
+                $('.task_description').val(layui.sessionData('form_value').inputval.description);
+            }
+            //自动获取表单值
+            setInterval(function () {
+                var build = $('.buildinput').val();
+                var station = $('#stationinput').val();
+                var title = $('.task_title').val();
+                var description = $('.task_description').val();
+                layui.sessionData('form_value', {
+                    key: 'inputval',
+                    value: {
+                        build: build,
+                        station: station,
+                        title: title,
+                        description: description
+                    }
+                })
+            }, 2000)
+
+            $('body').click(function (e) {
+                if (e.target.id != 'buildinput' && e.target.id != 'buildul' && e.target.id !=
+                    'buildpng') {
+                    if (!buildflag) {
+                        $(".builddiv>ul").hide();
+                        buildflag = true;
+                    }
+                }
+                if (e.target.id != 'buildinput1' && e.target.id != 'syn_buildpng' && e.target.id !=
+                    'syn_buildul') {
+                    if (!buildflag1) {
+                        $("#syn_buildul").hide();
+                        buildflag1 = true;
+                    }
+                }
+                //station失去焦点
+                $("#_easyui_textbox_input3").blur(function () {
+                    //var station = $('#_easyui_textbox_input3').val()
+                    var assign_id = $("input[name='assign']:checked").val();
+                    var station = $.trim($('#stationinput').val());
+                    var project_id = $('.projectselect').val()
+                    var flag = 1;
+                    // console.log(assign_id + ',' + station + ',' + project_id)
+                    if (assign_id && project_id) {
+                        station_blur(station, assign_id, project_id, flag)
+                     
+                    }
+                })
+                //同步station失去焦点
+                $("#_easyui_textbox_input4").blur(function () {
+                    // var station = $('#_easyui_textbox_input4').val()
+                    // console.log('1');
+                    var assign_id = $("input[name='assign']:checked").val()
+                    var syn_project = $('.sync_project').val();
+                    var station = $.trim($('#stationinput1').val());
+                    var flag = 2;
+                    console.log(assign_id + ',' + syn_project + ',' + station)
+                    if (assign_id && syn_project) {
+                        station_blur(station, assign_id, syn_project, flag)
+                    
+                    }
+                })
+
+            })
+
+            //返回首页
+            $('.back_btn').click(function () {
+                layui.sessionData('form_value', null);
+                parent.location.href = './main.html'
+            })
+            var buildflag = true;
+            $(".builddiv .arrpng").click(function () {
+                if (buildflag) {
+                    $(".builddiv>ul").show();
+                    buildflag = false;
+                } else {
+                    $(".builddiv>ul").hide();
+                    buildflag = true;
+                }
+
+            })
+            var buildflag1 = true;
+            $(".builddiv1 .arrpng").click(function () {
+                if (buildflag1) {
+                    $(".builddiv1>ul").show();
+                    buildflag1 = false;
+                } else {
+                    $(".builddiv1>ul").hide();
+                    buildflag1 = true;
+                }
+
+            })
+
+            var user_id = $('.user_id').html();
+            //    alert(user_id)
+            //请求专案
+            $.ajax({
+                type: "post",
+                url: "./create_task.php?action=create_search",
+                dataType: "json",
+                data: {
+                    'user_id': user_id
+                },
+                success: function (response) {
+                    console.log(response);
+                    var projectstr = "";
+                    var stationstr = "";
+                    var buildstr = "";
+                    var assignstr = "";
+                    var productstr = "";
+
+                    for (var i = 0; i < response['project'].length; i++) {
+                        projectstr = " <option value='" + response['project'][i]['id'] + "'>" +
+                            response['project'][i]['project'] + "</option>";
+                        $(".projectselect").append(projectstr);
+                        $('.sync_project').append(projectstr);
+                    }
+
+                    for (var j = 0; j < response['station'].length; j++) {
+                        stationstr = "<li class='licom' id='" + response['station'][j]['id'] + "'>" +
+                            response['station'][j]['station'] + "</li>"
+                        $(".stationdiv>ul").append(stationstr);
+                        $(".stationdiv1>ul").append(stationstr);
+                    }
+                    var stationarr = [];
+                    for (var j = 0; j < response['station'].length; j++) {
+                        var obj = {};
+                        obj.id = response['station'][j]['id'];
+                        obj.val = response['station'][j]['station'];
+                        stationarr.push(obj);
+                    }
+
+                   
+                    $('#stationinput').combobox({
+                        multiple: true,
+                        panelHeight: '200px',
+                        valueField: 'val',
+                        textField: 'val',
+                        data: stationarr
+                    });
+                    $('#stationinput1').combobox({
+                        multiple: true,
+                        panelHeight: '200px',
+                        valueField: 'val',
+                        textField: 'val',
+                        data: stationarr
+                    });
+
+                    //// 
+                    // var Requestorarr = [];
+                    // for (var j = 0; j < response['requestor'].length; j++) {
+                    //     var obj = {};
+                    //     obj.id = response['requestor'][j]['id'];
+                    //     obj.val = response['requestor'][j]['username'];
+                    //     Requestorarr.push(obj);
+                    // }
+                    // $('#Requestorinput').combobox({
+                    //     multiple: false,
+                    //     panelHeight: '200px',
+                    //     valueField: 'val',
+                    //     textField: 'val',
+                    //     data: Requestorarr
+                    // });
+                  
+                     function Trim(str)
+                       { 
+                        return str.replace(/(^\s*)|(\s*$)/g, ""); 
+                        }
+                         var reqstr='';
+
+                    // console.log(response['requestor']);
+                    for (var n = 0; n < response['requestor'].length; n++) {
+                          var loginuser=$('.user_id').html();
+                         
+
+                          if(Trim(loginuser) == Trim(response['requestor'][n]['id'])){
+                            // console.log(11111111111111111)
+                             reqstr = " <option value='" + response['requestor'][n]['id'] + "' selected> " +
+                            response['requestor'][n]['username'] + "</option>";
+                 
+                          }
+                          else{
+                            // console.log(11111222)
+                            reqstr = " <option value='" + response['requestor'][n]['id'] + "'>" +
+                            response['requestor'][n]['username'] + "</option>";
+                          }
+
+
+                        // console.log(reqstr)
+                        $("#Requestorinput").append(reqstr);
+                    }
+                    //默认创建者
+                 
+                 
+
+                    var appleDRIarr = [];
+                    for (var i=0;i<response['appleDRI'].length;i++ ){
+                        var obj = {};
+                        obj.id = response['appleDRI'][i]['id'];
+                        obj.val = response['appleDRI'][i]['username'];
+                        appleDRIarr.push(obj);
+
+                    }
+                    $('#appleDRIinput').combobox({
+                        multiple: false,
+                        panelHeight: '200px',
+                        valueField: 'val',
+                        textField: 'val',
+                        data: appleDRIarr
+                    });
+
+                    for (var k = 0; k < response['group'].length; k++) {
+                        assignstr = "<input class='licom' type='radio' name='assign' value='" +
+                            response['group'][k]['id'] + "' title='" + response['group'][k]['group'] +
+                            "'>"
+                        $(".assign").append(assignstr);
+                    }
+
+                    for (var m = 0; m < response['build'].length; m++) {
+                        buildstr = "<li class='licom' id='" + response['build'][m]['id'] + "'>" +
+                            response['build'][m]['build'] + "</li>"
+                        $(".builddiv>ul").append(buildstr);
+                        $(".builddiv1>ul").append(buildstr);
+                    }
+                    for (var n = 0; n < response['product'].length; n++) {
+                        productstr = " <option value='" + response['product'][n]['id'] + "'>" +
+                            response['product'][n]['product'] + "</option>";
+                        $(".productselect").append(productstr);
+                        $(".productinput1").append(productstr);
+                        $(".productinput1").attr("disabled", "true");
+                    }
+
+
+
+                    form.render('select')
+                    form.render("radio");
+
+                    //点击下拉列框切换值
+                    var stationstr = "";
+                    $(".builddiv>ul>li").click(function () {
+                        var build = $(this).text();
+                        $(".buildinput").val(build);
+                        $(".builddiv>ul").hide();
+                        buildflag = true;
+                    })
+                    $(".builddiv1>ul>li").click(function () {
+                        var build1 = $(this).text();
+                        $(".buildinput1").val(build1);
+                        $(".builddiv1>ul").hide();
+                        buildflag1 = true;
+                    })
+                    //同步时切换product改变project值
+                    form.on('select(selectProduct)', function (data) {
+                        var product_id = data.value
+
+                        $(".productinput1").val(product_id);
+                        $(".productinput1").attr("disabled", "true");
+                        
+                        $(".builddiv>ul").empty();
+                        $(".builddiv1>ul").empty();
+                        $(".buildinput").val("");
+                        $(".buildinput1").val("");
+
+                       // $(".projectselect").val(projectstr);
+
+
+                        $.ajax({
+                            type: "post",
+                            url: "./create_task.php?action=create_search",
+                            dataType: "json",
+                            async: false,
+                            data: {
+                                'product_id': product_id,
+                                'user_id': user_id
+                            },
+                            success: function (response) {
+                                $(".projectselect").html("");
+                                $(".sync_project").html("");
+                                for (var i = 0; i < response['project'].length; i++) {
+                                    projectstr = " <option value='" + response[
+                                            'project'][i]['id'] + "'>" +
+                                        response['project'][i]['project'] +
+                                        "</option>";
+                                   
+                                    $(".projectselect").append(projectstr);
+                                    $('.sync_project').append(projectstr);
+                                }
+
+                                $(".stationinput").html("");
+                                $(".stationinput1").html("");
+                                var stationarr = [];
+                                for (var j = 0; j < response['station'].length; j++) {
+                                    var obj = {};
+                                    obj.id = response['station'][j]['id'];
+                                    obj.val = response['station'][j]['station'];
+                                    stationarr.push(obj);
+                                }
+                                $('#stationinput').combobox({
+                                    multiple: true,
+                                    panelHeight: '200px',
+                                    valueField: 'val',
+                                    textField: 'val',
+                                    data: stationarr
+                                });
+                                $('#stationinput1').combobox({
+                                    multiple: true,
+                                    panelHeight: '200px',
+                                    valueField: 'val',
+                                    textField: 'val',
+                                    data: stationarr
+                                });
+                        
+
+
+
+                                form.render('select','station');
+                                form.render('select','product');
+                                form.render('select','project');
+                                // form.render('select');
+
+                             
+                                for (var m = 0; m < response['build'].length; m++) {
+                                    buildstr = "<li class='licom' id='" + response['build'][m]['id'] + "'>" +
+                                    response['build'][m]['build'] + "</li>"
+                                    $(".builddiv>ul").append(buildstr);
+                                    $(".builddiv1>ul").append(buildstr);
+                                    } 
+                                    $(".builddiv>ul>li").click(function () {
+                                        var build = $(this).text();
+                                        $(".buildinput").val(build);
+                                        $(".builddiv>ul").hide();
+                                        buildflag = true;
+                                         })
+                                    $(".builddiv1>ul>li").click(function () {
+                                        var build1 = $(this).text();
+                                        $(".buildinput1").val(build1);
+                                        $(".builddiv1>ul").hide();
+                                        buildflag1 = true;
+                                        })
+
+
+                                
+                                // project_id= $(".projectselect").val();
+
+                        //          $.ajax({
+                        //             type: "post",
+                        //             url: "./create_task.php?action=create_search",
+                        //             dataType: "json",
+                        //              data: {
+                        //             'project_id': project_id,
+                        //             'user_id': $('.user_id').html()
+                        //              },
+                        //             success: function (response) {
+                                      
+                        //             for (var m = 0; m < response['build'].length; m++) {
+                        //               buildstr = "<li class='licom' id='" + response['build'][m]['id'] + "'>" +
+                        //                  response['build'][m]['build'] + "</li>"
+                        
+                        //             $(".builddiv>ul").append(buildstr);
+                        //             $(".builddiv1>ul").append(buildstr);
+                          
+                        //              } 
+                        //          form.render('select')
+                        //     }
+                        // })
+                               form.render("radio");
+                                
+                            }
+                        })
+                    });
+
+                }
+            });
+            var synch_id = 2 //1表示开启同步，2关闭同步
+            //是否同步，显示与隐藏同步选项
+            form.on('switch(synch)', function (data) {
+                // alert(data.elem.checked)
+                if (data.elem.checked == true) {
+                    $(".sync_wrap").show();
+                    // $("#build_station_synch").show();
+                    $('#sync_assign_user').show()
+                    $("#product_project_synch .inputcom").removeAttr("disabled")
+                    $("#build_station_synch .inputcom").removeAttr("disabled")
+
+                    synch_id = 1;
+
+                } else {
+                    $(".sync_wrap").hide();
+                    $('#sync_assign_user').hide()
+                    // $("#build_station_synch").hide();
+                    $('#sync_assign_user').hide()
+                    $("#product_project_synch .inputcom").attr("disabled", "disabled")
+                    $("#build_station_synch  .inputcom").attr("disabled", "disabled")
+                    synch_id = 2
+
+                }
+            });
+
+            // 多文件上传
+            var demoListView = $('#demoList');
+            var files;
+            var uploadListIns = upload.render({
+                elem: '#testList',
+                // url: baseUrl + '/soc/search',
+                method: 'post',
+                accept: 'file',
+                // exts: 'csv',
+                multiple: true,
+                number: 50,
+                auto: false,
+                // bindAction: '#testListAction',
+                choose: function (obj) {
+                    // 判断是否选择搜索条件
+                    if ($('#project').val() == '' || $('#build').val() == '' || $('#date').val() ==
+                        '') {
+                        layer.msg('请选择搜索条件', {
+                            icon: 3
+                        });
+                    } else {
+                        files = this.files = obj.pushFile(); //将每次选择的文件追加到文件队列
+                        //读取本地文件
+                        obj.preview(function (index, file, result) {
+                            var tr = $(['<tr id="upload-' + index + '">', '<td>' + file.name +
+                                '</td>', '<td>' + (file.size / 1014).toFixed(1) +
+                                'kb</td>', '<td>',
+                                '<button class="layui-btn layui-btn-xs layui-btn-danger demo-delete">Delete</button>',
+                                '</td>', '</tr>'
+                            ].join(''));
+     
+                            //单个重传
+                            tr.find('.demo-reload').on('click', function () {
+                                obj.upload(index, file);
+                            });
+
+                            //删除
+                            tr.find('.demo-delete').on('click', function () {
+                                delete files[index]; //删除对应的文件
+                                tr.remove();
+                                uploadListIns.config.elem.next()[0].value = ''; //清空 input file 值，以免删除后出现同名文件不可选
+                            });
+
+                            demoListView.append(tr);
+                        });
+                    }
+                },
+            });
+            $("#fileListAction").click(function (e) {
+                e.preventDefault() //阻止submit默认行为，避免与ajax冲突
+                //  console.log($("select[name='assign_user_select']").html());
+                var assign_arr = [];
+                var flag = false;
+                $("select[name='assign_user_select']").each(function () {
+                    if ($(this).val() == "0") {
+                        alert('Please select assign user first');
+                        flag = true;
+                        return;
+                    } else {
+                        assign_arr.push($(this).val());
+                    }
+
+                })
+
+                if (flag) {
+                    return false;
+                }
+
+                // return false;
+                var form = new FormData();
+                for (let i in files) {
+
+                    form.append("upload[]", files[i])
+                }
+                //为空不能提交
+                if ($('.productinput').val() == "") {
+                    alert('Product not null');
+                    return false;
+                }
+                if ($('.projectinput').val() == "") {
+                    alert('Project not null');
+                    return false;
+                }
+                if ($('.buildinput').val() == "") {
+                    alert('Build not null');
+                    return false;
+                }
+                if ($('#stationinput').val() == "") {
+                    alert('Station not null');
+                    return false;
+                }
+
+                if ($('#Requestorinput').val() == "") {
+                    alert('Requestor not null');
+                    return false;
+                }
+                if ($('.task_title').val() == "") {
+                    alert('Task not null');
+                    return false;
+                }
+                if ($('.task_description').val() == "") {
+                    alert('Task Description not null');
+                    return false;
+                }
+                if ($("#test5").val() == "") {
+                    alert('ETA not null');
+                  
+                    return false;
+                }
+                if (!$("input[name='assign']:checked").val()) {
+                    alert('Assign not null');
+                    return false;
+                }
+
+              
+                 if ($('#appleDRIinput').val() == "") {
+                    alert('F1 not null');
+                    return false;
+                }
+
+
+                // alert($("input[name='assign']:checked").val());
+                form.append('product', $('.productselect').val())
+                form.append('project', $('.projectselect').val())
+                form.append('build', $('.buildinput').val())
+                form.append('station', $('#stationinput').val())
+               
+
+                form.append('task_title', $('.task_title').val())
+                // form.append('task_description', $('.task_description').val().replace(/\r\n/g, '<br/>').replace(
+                //     /\n/g, '<br/>').replace(/\s/g, ' '))
+                
+                // console.log("1111"+ $('.task_description').val())
+
+                form.append('task_description', $('.task_description').val())
+                // form.append('task_description', $('.task_description').val().replace('\\\&quot','&quot'))
+               
+
+                form.append('sync', $(".syn").is(':checked'))
+                // var val = $('input[name="sex"]:checked').val(); 
+                form.append('assign', $("input[name='assign']:checked").val());
+                form.append('eta', $("#test5").val());
+
+                form.append('appleDRI',$("#appleDRIinput").val()); 
+                form.append('Priority',$(".Priority").val());  
+                form.append('Requestor',$("#Requestorinput").val());
+
+                // console.log($("#Requestorinput").val());
+                //  return false;
+                // console.log("123456");
+                // console.log($("#Requestorinput").val());
+                // console.log($("#stationinput").val());
+
+   
+
+                form.append('station_user_id', assign_arr);
+                // $("input[type='checkbox']").is(':checked')
+                // var syn=$(".syn").is(':checked'); //是否同步
+                if ($(".syn").is(':checked')) { //选中同步添加同步数据
+                    // var sync_assign_arr = [];
+                    // $("select[name='sync_assign_user_select']").each(function () {
+                    //     if ($(this).val() == "0") {
+                    //         alert('Please select assign user first')
+                    //         return false;
+                    //     }
+                    //     sync_assign_arr.push($(this).val());
+                    // })
+                    var sync_assign_arr = [];
+                    var flag1 = false;
+                    $("select[name='sync_assign_user_select']").each(function () {
+                        if ($(this).val() == "0") {
+                            alert('Please select assign user first');
+                            flag1 = true;
+                            return;
+                        } else {
+                            sync_assign_arr.push($(this).val());
+                        }
+
+                    })
+
+                    if (flag1) {
+                        return false;
+                    }
+                    $(".productinput1").attr("disabled", "false");
+                    var syncproduct = $('.productinput1').val();
+                    var syncproject = $('.projectinput1').val();
+                    var syncbuild = $('.buildinput1').val();
+                    var syncstation = $('#stationinput1').val();
+
+                    if (syncproduct == "") {
+                        alert('Product not null');
+                        return false;
+                    }
+                    if (syncproject == "") {
+                        alert('Projectnot null');
+                        return false;
+                    }
+                    if (syncbuild == "") {
+                        alert('Build not null');
+                        return false;
+                    }
+                    if (syncstation == "") {
+                        alert('Station not null');
+                        return false;
+                    }
+
+                    form.append('sync_product', $('.productinput1').val())
+                    form.append('sync_project', $('.sync_project').val())
+                    form.append('sync_build', $('.buildinput1').val())
+                    form.append('sync_station', $('#stationinput1').val())
+                    form.append('sync_station_user_id', sync_assign_arr)
+                }
+                $('.progressbar').show()
+                var n = 0,
+                    timer = setInterval(function () {
+                        n = n + Math.random() * 10 | 0;
+                        if (n < 100) {
+                            element.progress('demo', n + '%');
+                        }
+
+                    }, 300 + Math.random() * 1000);
+                // console.log(form);
+                $.ajax({
+                    url: './create_task.php?action=create_task',
+                    type: 'POST',
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    data: form,
+                    success: function (res) {
+                        if (res == 'success') {
+                            n = 100;
+                            element.progress('demo', n + '%');
+                            clearInterval(timer);
+                            setTimeout(function () {
+                                parent.location.href = './main.html';
+                                layui.sessionData('form_value', null);
+                            }, 1000)
+
+                        } else {
+                            alert('Add error')
+                        }
+                    }
+                })
+
+            })
+        });
+    </script>
+</body>
+
+</html>

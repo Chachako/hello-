@@ -1,0 +1,449 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>TeamEase</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        body {
+            margin: 0px;
+            height: 0px;
+            overflow: hidden;
+            min-width: 1200px;
+        }
+
+        .icon {
+            font-size: 16px;
+            color: white;
+            padding-right: 5px;
+        }
+
+        @font-face {
+            font-family: 'soul-icon';  /* project id 677836 */
+            src: url('//at.alicdn.com/t/font_677836_jwq362m0tt.eot');
+            src: url('//at.alicdn.com/t/font_677836_jwq362m0tt.eot?#iefix') format('embedded-opentype'),
+            url('//at.alicdn.com/t/font_677836_jwq362m0tt.woff2') format('woff2'),
+            url('//at.alicdn.com/t/font_677836_jwq362m0tt.woff') format('woff'),
+            url('//at.alicdn.com/t/font_677836_jwq362m0tt.ttf') format('truetype'),
+            url('//at.alicdn.com/t/font_677836_jwq362m0tt.svg#iconfont') format('svg');
+        }
+
+        .soul-icon {
+            font-family:"soul-icon" !important;
+            font-size: 16px;
+            font-style: normal;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        #animation-left-nav {
+            position: absolute;
+            left: 0px;
+        }
+
+        .layui-body {
+            left: 0;
+        }
+
+        .layui-layout-admin .layui-body {
+            bottom: 10px;
+        }
+
+        #navLeft {
+            left: 0px !important;
+        }
+
+        #navright {
+            margin-right: 60px;
+        }
+
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0px 1000px white inset;
+            border: 1px solid #CCC !important;
+        }
+
+        #navLeft>li>a,
+        #navright>li>span,
+        #navright>li>a {
+            font-size: 18px !important;
+            font-weight: bold;
+            margin-left: -10px
+        }
+
+        .envolop {
+            background: url('../img/news.png') left center no-repeat;
+            /* position: relative; */
+            width: 60px;
+            cursor: pointer;
+            display: inline-block;
+            height:60px;
+            /* line-height:20px; */
+        }
+
+        .message_num {
+            position: absolute;
+            top:30px;
+            left:-3px;
+            background: red;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: none;
+            color: #fff;
+            line-height: 20px;
+            text-align: center;
+            margin-left: 10px;
+        }
+        .message_numli{
+            display: none;
+        }
+    
+        .message_ul{
+            position: absolute;
+            overflow-y: scroll
+        }
+        .newsli::before{
+           content: '';
+           border-left:1px solid #fff;
+           position:absolute;
+           top:22px;
+           left:-6px;
+           width:1px;
+           height:21px
+        }
+        .newsli::after{
+           content: '';
+           border-left:1px solid #fff;
+           position:absolute;
+           top:22px;
+           right:-11px;
+           width:1px;
+           height:21px
+        }
+        .copy_right{
+            width:100%;
+            text-align: center;
+            position: fixed;
+            bottom: 10px;
+            color:#ccc;
+            font-size: 12px;
+        }
+        .logo{
+            width:150px;
+            height:50px;
+            margin-top: -5px
+        }
+        /* .newsli{
+            background: url('../img/user.png') left center no-repeat;
+        } */
+    </style>
+</head>
+
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header">
+            <ul class="layui-nav layui-layout-left" id="navLeft">
+                <li class="layui-nav-item" id="account_list">
+                    <a href="../welcome.html" target="_parent"><img class='logo' src='../img/logo.png'></a>
+                </li>
+                <li class="layui-nav-item" id="account_list">
+                        <a href="./task_list.html" target="main">Task</a>
+                    </li>
+                <li class="layui-nav-item">
+                    <a href="./add_task.html" target="main">New Task</a>
+                </li>
+                <!-- <li class="layui-nav-item">
+                    <a href="./filter/index.html" target="main">Filter</a>
+                </li> -->
+                <li class="layui-nav-item">
+                    <a href="./filter/index copy.html" target="main">Filter</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./filter/export_excel.html" target="main">Export</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./draw/statistic_imgs.html" target="main">Statistics</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./help/TeamEaseHelpDoc.html" target="main">Help</a>
+                </li>
+            </ul>
+            <ul class="layui-nav layui-layout-right" id='navright' style="padding-left: 50px">
+                <li class='layui-nav-item message_numli' style='margin-right:25px'>
+                    <a href="#" class='envolop' style="padding:0" ><span class='message_num'></span></a>
+                    <dl class="layui-nav-child message_ul"></dl>                    
+                </li>
+                <li class='layui-nav-item newsli'  style='padding:0 20px 0 0;margin-right:20px'>
+                    <!-- <img src='../img/user.png'> -->
+                    <a href="javascript:;" class='login-user' style="padding: 0px 15px; padding-right: 0;">
+                            <img src='../img/user.png'>
+                        <span style='font-size: 22px; vertical-align:middle'><?php echo $_SESSION['cooper_user_info'][0]['username'];?></span></a>
+                            
+                    <dl class="layui-nav-child">
+                        <dd>
+                            <a href="#" class='myinfo' >User Information</a>
+                        </dd>
+                        <dd>
+                            <a href="#" onClick="updateBtn()" id="addBtn">Change Password</a>
+                        </dd>
+                        <dd>
+                            <a href="#" onClick="show_preferences()" >Preferences</a>
+                        </dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="../loginout.php"><img src='../img/exit.png'><span style='font-size: 22px; vertical-align:middle'>&nbsp;Exit</span></a>
+                </li>
+
+            </ul>
+        </div>
+        <div class="layui-body" style="overflow-y:hidden;">
+            <!-- 内容主体区域 -->
+            <div style="height:100%">
+                <iframe id="main" src="./task_list.html" name="main" style="overflow: visible;" scrolling="auto"
+                    frameborder="no" width="100%" height="100%" ranat="server"></iframe>
+                
+            </div>
+        </div>
+       
+        <form class="layui-form" id="updateForm" onSubmit="return false;" style="display:none;">
+                <div class="layui-form-item" style="margin-top:20px;">
+                    <label class="layui-form-label">Password:</label>
+                    <div class="layui-input-inline">
+                        <input type="password" id="password" name="password" required lay-verify="required" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="updateform">Change</button>
+                    </div>
+                </div>
+        </form>
+        <p class='copy_right'>Copyright &copy; 2019 Foxconn Power by Software </p>
+    </div>
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <!-- <script src='../js/index.js'></script> -->
+    <script src='../layui/x-layui.js'></script>
+    <script>
+
+       
+          // window.onbeforeunload=function(){
+                //  $.ajax({
+                //     type: 'post',
+                //     url: './search.php?action=logout_time',
+                //     cache: false,
+                //     async: false,
+                //     dataType: 'json',
+                //     success: function (data) {// console.log(data)
+                //     }
+                // });
+        // };
+
+
+        layui.use(['form', 'layer', 'element', 'laydate', 'upload', 'upload', 'rate', 'jquery'], function () {
+            var form = layui.form,
+                $ = layui.jquery;
+            upload = layui.upload,
+                laydate = layui.laydate,
+                layer = layui.layer;
+            rate = layui.rate;
+            //myinfo 弹框
+            $('.myinfo').on('click', function(){
+                var url='./user_information.html';
+                x_admin_show('User information',url,'600','450')
+
+            });
+
+
+           //获取session 
+          // console.log(document.cookie.split("; "));
+
+        // window.onbeforeunload=function(){return "你真的要离开吗？"};
+            //修改密码
+            updateBtn = function () {
+                var title = true;
+                layer.open({
+                    type: 1,
+                    title: 'Change Password',
+                    area: '500px;',
+                    anim: 1, //弹出动画
+                    id: 'btn_add',
+                    moveType: 1,
+                    shade: 0.6,
+                    anim: 1,
+                    content: $('#updateForm')
+                })
+            }
+          
+            show_preferences=function(){
+                var url='./setting/index.html';
+                x_admin_show('Preferences',url,'800','500')
+            }
+            
+            show_detail_task=function(id){
+                var id=id;
+                var url='./detail_task.html?task_id=' + id;
+                x_admin_show('Task',url,'1200')
+            }
+            clear_message=function(){
+                console.log('clear_message')
+                $.ajax({
+                    type: 'post',
+                    url: './task.php?action=clear_message',
+                    dataType: 'json',
+                    success: function (data) {
+                        console.log(data)
+                    }
+                });
+            }
+            form.on('submit(updateform)', function (data) {
+                $.ajax({
+                    type: 'post',
+                    url: './public_handle.php?action=update_password',
+                    data: $("#updateForm").serialize(),
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        // console.log(data)
+                        if (data == '1') {
+                            alert('Update Success!')
+                            layer.closeAll();
+                        } else if (data == '-1') {
+                            alert('The new password is the same as the old one!')
+                            layer.closeAll();
+                        } else {
+                            alert('Update fail!')
+                            layer.closeAll();
+                        }
+                    }
+                });
+                // return false;
+            });
+
+            
+            function showmessage() {
+                
+                $.ajax({
+                    type: "post",
+                    url: "./search.php?action=search_message_task",
+                    dataType: "json",
+                    success: function (res) {
+                        function show_detail_task(id){
+                            var url='./detail_task.html?task_id=' + id;
+                            x_admin_show('Task',url,'1200')
+                        }
+                        $('.message_ul').html("");
+                        var taskstr = "";
+                        if (res['count'] == 0) {
+                            $('.message_num').html("")
+                            $(".message_num").css('display','none'); 
+                            $('.message_ul').removeClass("layui-nav-child ");
+                            $(".message_ul").css('height','0px'); 
+
+                        } else {
+                            taskstr = "";
+                            if(res['new_all_task'].length >0)
+                                taskstr += "<dd><a onclick='clear_message()' href='javascript:void(0)'><i class='soul-icon'>&#xe63e;</i> clear</a> </dd>";
+                            for (var n = 0; n < res['new_all_task'].length; n++) {
+                                if(res['new_all_task'][n]['task_title'].length>20){
+                                    var tasktitle=(res['new_all_task'][n]['task_title']).substr(0,17)+'...'; 
+                                }else{
+                                    var tasktitle=res['new_all_task'][n]['task_title']
+                                }
+                                taskstr += "<dd><a onclick='show_detail_task("+res['new_all_task'][n]['id']+")' href='javascript:void(0)'>" + tasktitle +
+                                    "</a> </dd>";
+                               
+                            }
+                            $(".message_ul").append(taskstr);
+                            $(".message_num").css('display','block');                             
+                            $('.message_ul').addClass("layui-nav-child ");
+                            $('.message_num').html(res['count'])
+                            if(res['count'] > 6){
+                                $(".message_ul").css('height','200px');
+                            } else{
+                                $(".message_ul").css('height','auto');
+                            }                            
+                        }
+
+                    }
+                })
+            }
+
+
+            function Login_info(){
+
+                 $.ajax({
+                    type: 'post',
+                    url: './search.php?action=login_info',
+                   
+                    cache: false,
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                     
+                    }
+                });
+
+            }
+
+
+
+            // function Logintime(){
+
+            //      $.ajax({
+            //         type: 'post',
+            //         url: './search.php?action=login_time',
+                   
+            //         cache: false,
+            //         async: false,
+            //         dataType: 'json',
+            //         success: function (data) {
+                     
+            //         }
+            //     });
+            // }
+            //  Logintime();
+             
+            Login_info();
+            setInterval(function () {
+                  Login_info()
+            }, 60000)
+
+
+            setInterval(function () {
+                showmessage()
+    
+            }, 1000)
+            showmessage()
+        })
+    </script>
+</body>
+
+</html>

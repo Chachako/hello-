@@ -1,0 +1,1645 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Detail_task</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .detail_task_wrap {
+            /* width: 50%; */
+            background: #f3f7fb;
+            margin: auto;
+            padding: 50px;
+        }
+
+        .task {
+            display: inline-block;
+            /* border-bottom: 1px solid #000; */
+            width: 75%;
+        }
+
+        .detail_tab td>span.detail_val,.detailhistory_tab td>span.detail_val,.cancel_done span.detail_val{
+            margin-left: 10px;
+        }
+
+        .detail_tab a,.detailhistory_tab a{
+            margin-right: 10px;
+        }
+
+        .detail_title {
+            display: inline-block;
+            width: 134px;
+            text-align: right;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .updateform{
+            background: #fff;
+            width:100%;
+            padding:20px;
+            box-sizing: border-box;
+        }
+        #demoList{
+             text-align: center;
+         }
+         .scorewrap{
+             width:450px;
+             display: none;
+             margin-left:113px;
+         }
+         .cancel-reason{
+            display: none;
+         }
+         .scorewrap textarea,.cancel-reason textarea{
+             padding:10px 0 0 10px;
+         }
+         .updateform{
+             display: none;
+             width:90%;
+             margin:10px auto;
+             box-shadow: 0 12px 16px 0 rgba(0,0,0,.12);
+         }
+         .done_tr,.cancel_tr{
+             display: none;
+         }
+         .login_name{
+             display: none;
+         }
+         .login_group{
+            display: none;
+         }
+
+         .update_eta{
+             display: none;
+         }
+         /* #assign_user{
+             display: none;
+         } */
+         .update_eta .layui-input{
+             width:160px;
+             display: inline-block
+         }
+         .task_des{
+             width:75%!important;
+             border:1px solid #ccc;
+             display: inline-block;
+             padding:1px 0 10px 10px
+            
+         }
+         .cancel_done{
+             display: none;
+             background: #fff;
+             width:100%;
+            box-sizing: border-box;
+            box-shadow: 0 12px 16px 0 rgba(0,0,0,.12);
+         }
+         .transfdiv{
+             display: none
+         }
+         .layui-table td{
+             padding:2px 15px;
+         }
+         .detail_task{
+             padding:10px 0;
+             background: #fff;
+             width:90%;
+             margin:0 auto;
+             box-shadow: 0 12px 16px 0 rgba(0,0,0,.12);
+         }
+         .task_history{
+             width:90%;
+             margin:0 auto;
+             background: #fff;
+             padding:10px 0;
+             box-shadow: 0 12px 16px 0 rgba(0,0,0,.12);
+         }
+         .creator_td{
+             position:relative;
+             cursor: pointer;
+         }
+         .creator_td:hover .creator_mask_show{
+             display: block;
+
+         }
+         .creator_mask_show{
+             position:absolute;
+             top:20px;
+             left:-4px;
+             padding:0 10px;
+
+             /*height:70px;*/
+             line-height: 25px;
+           
+             background: #000;
+             color:#fff;
+             z-index: 2;
+             display: none;
+         }
+         .creator_mask_show span{
+            white-space:nowrap;
+         }
+
+
+         .assign_group_show{
+             display: inline-block;
+             margin:10px 0;
+         }
+         .history_wrap img{
+             margin-left:45%;
+         }
+         html , body{
+            height: 100%;
+            background: #f3f7fb;
+        }
+        .layui-textarea{
+            min-height:20px
+        }
+        .timediv{
+            display: none; 
+        }
+        .operatdiv{
+            position:relative;
+        }
+        .overlay_wrap{
+            position:absolute;
+            top:2px;
+            right:42px;
+            display: none;
+        }
+        .layui-table tbody tr:hover{
+            background-color: #ffffff
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="detail_task_wrap">
+        <!-- 初创记录-->
+        <p class='creater'></p>
+        <div class="detail_task">
+            <p class='login_name'>
+                <?php echo $_SESSION['cooper_user_info'][0]['id'];?>
+            </p>
+            <p class='login_group'>
+                <?php echo $_SESSION['cooper_user_info'][0]['group_id'];?>
+            </p>
+            <table class="layui-table detail_tab" lay-skin="nob">
+                <colgroup>
+                    <col width="50%">
+                    <col width="50%">
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td style="column-span: 2">
+                            <span class='detail_title'>NO:</span>
+                            <span class='creat_no detail_val'></span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>                          
+                            <span class='detail_title'>Creator:</span>
+                            <span class='creator_td detail_val'>
+                                <span class='creator'></span>
+                                <div class="creator_mask_show">
+                                    <span>Tel:</span><span class='create_tel'></span> <br/>
+                                    <span>LongTel:</span><span class='longTel'></span> <br/>
+                                    <span>Email:</span><span class='create_email'></span>
+                                </div>
+                            </span>
+                        </td>
+                        <td>
+                            <span class='detail_title'>Create Time:</span>
+                            <span class='creat_time detail_val'></span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <span class='detail_title'>Requestor:</span>  
+                            <span class='detail_val creator_td'>
+                                <span class='requestor'></span>
+                                <div class="creator_mask_show">
+                                <span>Tel:</span><span class='req_tel'></span> <br/>
+                                <span>LongTel:</span><span class='req_longtel'></span> <br/>
+                                <span>Email:</span><span class='req_email'></span>
+                                </div>
+                            </span>
+                        </td>
+                        <td>
+                            <span class='detail_title'>F1 DRI:</span>
+                            <span class='detail_val creator_td'>
+                                <span class='FDRI'></span>
+                                <div class="creator_mask_show">
+                                    <span>Tel:</span><span class='apple_tel'></span> <br/>
+                                    <span>LongTel:</span><span class='apple_longtel'></span><br/>
+                                    <span>Email:</span><span class='apple_email'></span>
+                                </div>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class='detail_title'>Product:</span>
+                            <span class='product detail_val'></span>
+                        </td>
+                        <td>
+                            <span class='detail_title'>Project:</span>
+                            <span class='project detail_val'></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class='detail_title'>Stage:</span>
+                            <span class='stage detail_val'></span>
+                        </td>
+                        <td>
+                            <span class='detail_title'>Station:</span>
+                            <span class='station detail_val'></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <span class='detail_title'>Task:</span>
+                            <span class='task detail_val'></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <span class='detail_title' style='vertical-align: top'>Task Description:</span>
+                            <!--    <p class='task_des '></p> -->
+                            <textarea  rows="4" name="task_description" class="layui-textarea  task_des"   style='margin-left: 9px'  readonly></textarea> 
+                        </td>
+                    </tr>
+                    <tr class='create_file'>
+                        <td colspan="2">
+                            <span class='detail_title' style='vertical-align: top'>Attachment:</span>
+                            <!-- <div style='display: inline-block' class='files'> -->
+                            <div style='display: inline-block;margin-left: -4px'>    
+                                <table class='files'>  
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class='eta'>
+                            <span class='detail_title'>ETA:</span>
+                            <span class='eta_time detail_val'></span>
+                        </td>
+                        <td class='update_eta'>
+                            <span class='detail_title'>ETA:</span>
+                            <span class=' detail_val'></span>
+                            <input type="text" class="layui-input" id="update_eta" placeholder="yyyy-MM-dd HH:mm:ss"
+                                name='eta' class='eta'>
+                            <button class="layui-btn layui-btn-sm Update_btn">Update</button>
+                        </td>
+                        <td>
+                            <span class='detail_title'>To:</span>
+                            <span class='detail_val  creator_td'>
+                                <span class='assign'></span>
+                                <div class="creator_mask_show">
+                                    <span>Tel:</span><span class='create_assign_tel'></span> <br/>
+                                    <span>LongTel:</span><span class='create_assign_longTel'></span><br/>
+                                    <span>Email:</span><span class='create_assign_email'></span>
+                                </div>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- 更新记录-->
+        <div class="history_wrap">
+
+        </div>
+        <!-- cancel/done记录 -->
+        <div class='cancel_done' style="margin: 0 auto; width: 90%;">
+            <table class="layui-table detail_tab" lay-skin="nob">
+                <colgroup>
+                    <col width="50%">
+                    <col width="50%">
+                </colgroup>
+                <tbody class="CandD">
+                    <tr class='done_tr'>
+
+                        <td><span class='detail_title'>Cut-in Time:</span><span class='done_onlinetime detail_val'></span></td>
+                        <td><span class='detail_title'>Comment:</span><span class='done_comment detail_val'></span></td>
+                        
+                    </tr>
+                    <tr class='done_tr'>
+                        <td><span class='detail_title'>Overlay Ver:</span><span class='done_version detail_val'></span></td>
+                        <td><span class='detail_title'>Score:</span><span class='done_score detail_val'></span></td>
+                      
+                    </tr>
+                    <tr class='done_tr'>
+                        <!-- <td colspan="2"><span class='detail_title'>Done By:</span><span class='done_user detail_val'></span></td> -->
+                    </tr>
+                    <tr class='done_tr'>
+                        <!-- <td colspan="2"><span class='detail_title'>Done Time:</span><span class='detail_val done_cancel_val'>s</span></td> -->
+                    </tr>
+
+
+                  
+                    <tr class='cancel_tr'>
+                            <td colspan="1"><span class='detail_title'>Cancel by:</span><span class='cancel_user detail_val'></span></td>
+                            <td colspan="1"><span class='detail_title'>Time:</span><span class='done_cancel_val detail_val'></span></td>
+                    </tr>
+                    <tr class='cancel_tr'>
+                            <td colspan="2"><span class='detail_title'>Cancel reason:</span><span class='cancel_reason detail_val'></span></td>
+                    </tr>
+                    <!-- <tr class='cancel_tr'>
+                        <td colspan="2"><span class='detail_title'>Cancel Time:</span><span class='done_cancel_val detail_val'></span></td>
+                    </tr> -->
+                </tbody>
+            </table>
+        </div>
+        <!-- 更新表单-->
+        <div class="updateform">
+            <form class="layui-form task_add" action="">
+
+                <div class="layui-form-item operatdiv">
+
+                    <label class="layui-form-label  formleft">Operation</label>
+                    <div class="layui-input-block layui-form radiodiv" lay-filter="operateradio">
+                    </div>
+                    <div class='overlay_wrap'>
+                        <label class="layui-form-label">Overlay Ver:</label>
+                        <div class="layui-input-inline">
+                        <input type="text" name="task_title"  id="Version" lay-verify="required"  class="layui-input" style='width:78%' >
+                        <!-- <button class="layui-btn layui-btn-sm Overlay_btn">Update</button> -->
+                        </div>  
+                    </div>
+                      
+
+
+
+                </div>
+
+
+
+                <div class="layui-form-item timediv">
+                    <label class="layui-form-label formleft">Cut-in Time:</label>
+                    <div class="layui-input-inline">
+                    <input type="text" class="layui-input" id="onlineTime"  lay-verify="required" placeholder="yyyy-MM-dd HH:mm:ss" name='onlineTime'
+                        class='onlineTime'>
+                     </div>
+                </div>
+
+
+                <div class="layui-form-item layui-form-text statusdiv">
+                    <label class="layui-form-label formleft">Status</label>
+                    <div class="layui-input-block">
+                        <textarea name="status" class="layui-textarea  formright insert_status" style='width:89%' > </textarea>
+                    </div>
+                </div>
+
+    
+
+
+
+                <div class="layui-upload filesdiv">
+                    <button type="button" class="layui-btn layui-btn-normal" id="testList">Add Files</button>
+                    <div class="layui-upload-list">
+                        <table class="layui-table" style='width:89%'>
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>Size</th>
+                                    <th>Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody id="demoList"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-form-item assigndiv">
+                    <label class="layui-form-label">To</label>
+                    <div class="layui-input-inline">
+                        <select name="assign_group" lay-filter="assign" class='select_group'>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item" id='assign_user'>
+                    <label class="layui-form-label formleft"></label>
+                    <div class="layui-input-inline">
+                        <table class="layui-table">
+                            <tbody>
+                                <tr>
+                                    <td>a</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-form-item transfdiv">
+                    <label class="layui-form-label">To:</label>
+                    <div class="layui-input-inline layui-form" lay-filter="transform">
+                            <select name="transform"  class='transform_select'>
+                            </select>
+                    </div>
+                </div>
+
+                <!-- 评分div -->
+                <div class="scorewrap">
+                    <textarea name="comment" id="score_comment" cols="50" rows="5" placeholder="Please enter your assessment of the mission"></textarea><br>
+                    <div id="score"></div>
+                </div>
+
+                <div class="layui-input-inline cancel-reason">
+                        <label class="layui-form-label formleft" style='display: inline-block'>Reason</label>
+                        <textarea name="comment" id="cancel_reason" class="layui-textarea  formright" style='display: inline-block;width:88%;margin-bottom: 10px'></textarea>
+                 </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn taskbtn" id="task_add" >Submit</button>
+                        <button class="layui-btn layui-btn-primary cancelbtn">Cancel</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script src='../layui/x-layui.js'></script>
+    <script>
+        layui.use(['form', 'layer', 'element', 'laydate', 'upload', 'upload', 'rate', 'jquery'], function () {
+            var form = layui.form,
+                $ = layui.jquery;
+            upload = layui.upload,
+                laydate = layui.laydate,
+                rate = layui.rate;
+            //打分事件
+            rate.render({
+                elem: '#score'
+            })
+            //修改日期
+            laydate.render({
+                elem: '#update_eta',
+                type: 'datetime',
+                lang: 'en',
+                min: 0
+            });
+
+            //onlinetime
+             // var curTime = new Date();
+            laydate.render({
+                elem: '#onlineTime',
+                type: 'datetime',
+                lang: 'en',
+                // value: curTime,
+                min: -30
+            });
+
+
+
+            $('.cancelbtn').click(function () {
+                x_admin_close(1)
+            })
+            function trim(str){ 
+             return str.replace(/(^\s*)|(\s*$)/g, ""); 
+            }
+        
+            //单选框点击事件
+            form.on('radio(operator)', function (data) {
+                //    alert(data.value); //被点击的radio的value值
+                if (data.value == '2') { //Done,评分框显示
+                    $(".scorewrap").show();
+                    $(".cancel-reason").hide();
+                    $(".assigndiv").hide();
+                    $("#assign_user").hide();
+                    $('.statusdiv').show();
+                    $('.filesdiv').show();
+                    $('.transfdiv').hide();
+                    //cut in line 显示
+                    $('.timediv').show()
+                } else if (data.value == '4') { //cancel,取消框显示
+                    $('.timediv').hide();
+                    $(".cancel-reason").show();
+                    $(".scorewrap").hide();
+                    $(".assigndiv").hide();
+                    $("#assign_user").hide();
+                    $('.statusdiv').hide();
+                    $('.filesdiv').hide();
+                    $('.transfdiv').hide()
+                } else if (data.value == '3') { //block,取消框显示
+                    $('.timediv').hide();
+                    $(".cancel-reason").hide();
+                    $(".scorewrap").hide();
+                    $(".assigndiv").hide();
+                    $("#assign_user").hide();
+                    $('.statusdiv').show();
+                    $('.filesdiv').show();
+                    $('.transfdiv').hide()
+                } else if (data.value == '5') { //tranform,取消表单显示
+                    $('.timediv').hide();
+                    $(".cancel-reason").hide();
+                    $(".scorewrap").hide();
+                    $(".assigndiv").hide();
+                    $("#assign_user").hide();
+                    $('.statusdiv').hide();
+                    $('.filesdiv').hide();
+                    $('.transfdiv').show()
+                    //渲染转发者
+                    // var task_id = window.location.search.slice(1).split('=')[1];
+                    var task_id = window.location.search.slice(1).split('&')[0].split('=')[1];
+                    $.ajax({
+                        type: "get",
+                        url: "./task.php?action=task_select_user&task_id=" + task_id,
+                        dataType: "json",
+                        success: function (res) {
+                            $(".transform_select").html("");
+                            var transformstr = "";
+                            for (var i = 0; i < res.length; i++) {
+                                tranformstr =
+                                "<option value='"+ res[i]['id']+ "'>" +res[i]['username'] + "</option>";
+                                $(".transform_select").append(tranformstr);
+                            }
+                            form.render('select','transform');
+                        }
+
+                    })
+                    // $('.updateform').hide()
+                } else { //update
+                    $('.timediv').hide();
+                    $("#assign_user").show();
+                    $(".scorewrap").hide();
+                    $(".cancel-reason").hide();
+                    $(".assigndiv").show();
+                    $('.statusdiv').show();
+                    $('.filesdiv').show();
+                    $('.transfdiv').hide()
+
+                }
+            });
+
+            //渲染页面元素
+            // var task_id = window.location.search.slice(1).split('=')[1];
+            var task_id = window.location.search.slice(1).split('&')[0].split('=')[1];
+            var station = "";
+            var project_id = "";
+            $.ajax({
+                url: 'task.php?action=task&task_id=' + task_id,
+                type: 'GET',
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    // console.log(res);
+                    var user_name = res['task']['create_user_id'];
+                    var login_name = $(".login_name").html()
+                    var login_group = $(".login_group").html()
+
+                    
+                    // console.log(login_group);
+                    $('.product').html(res['task']['product'])
+                    $('.creat_no').html(res['task']['no'])
+                    $('.creator').html(res['task']['username'])
+                    $('.creat_time').html(res['task']['create_time'])
+                    $('.project').html(res['task']['project'])
+                    $('.stage').html(res['task']['build'])
+                    $('.station').html(res['task']['station'])
+                    $('.task').html(res['task']['task_title'])
+                    $('.task_des').html(trim(res['task']['task_description']))
+                    $('.eta_time').html(res['task']['eta'])
+                    $('.creater').html(res['task']['create_user_group_name'])
+                    $('.create_tel').html(res['task']['create_user_phone'])
+                    $('.longTel').html(res['task']['long_phone'])
+                    $('.create_email').html(res['task']['email'])
+                    $('.create_assign_tel').html(res['task']['create_assign_user_phone'])
+                    $('.create_assign_longTel').html(res['task']['create_assign_longTel'])
+                    $('.create_assign_email').html(res['task']['create_assign_email'])
+                    $('.requestor').html(res['task']['requestor'])
+                    $('.FDRI').html(res['task']['dri'])
+
+                    $('#Version').val(res['task']['version'])
+
+                    
+                    $('.req_longtel').html(res['task']['req_longTel'])
+                    $('.req_email').html(res['task']['req_email'])
+                    $('.req_tel').html(res['task']['req_user_phone'])
+
+                    $('.apple_longtel').html(res['task']['apple_longTel'])
+                    $('.apple_email').html(res['task']['apple_email'])
+                    $('.apple_tel').html(res['task']['apple_user_phone'])
+
+
+                    var user = res['task']['create_assign_user'];
+                    var assigngroup = res['task']['group']
+                    $('.assign').html(assigngroup + '  ' + user)
+                    $('#update_eta').val(res['task']['eta']);
+                    station = res['task']['station'];
+                    project_id = res['task']['project_id'];
+                    var file = "";
+                    if(res['task']['olduploadpath']==""){
+                         $('.create_file').html("")
+                    }else{
+                    //     for (var i = 0; i < res['task']['olduploadpath'].length; i++) {
+                    //     file = "<tr><td><a href='" + res['task']['uploadpath'][i] + "' download='" + res['task']['olduploadpath'][i] + "'>" + res['task']['olduploadpath'][i] + "</a> </td></tr>";
+                    //     $(".files").append(file)
+                    // }
+                    for (var i = 0; i < res['task']['olduploadpath'].length; i=i+2) {
+
+                        // console.log(res['task']['olduploadpath'][i+1]==undefined);
+
+                        if(res['task']['olduploadpath'][i+1]==undefined){
+                            file = "<tr>"
+                                +"<td><a href='" + res['task']['uploadpath'][i] + "' download='" + res['task']['olduploadpath'][i] + "'>" + res['task']['olduploadpath'][i] + "</a> </td>"
+                               
+                               + "</tr>";
+                        $(".files").append(file)
+                        }else{
+                            file = "<tr>"
+                                +"<td><a href='" + res['task']['uploadpath'][i] + "' download='" + res['task']['olduploadpath'][i] + "'>" + res['task']['olduploadpath'][i] + "</a> </td>"
+                                +"<td><a href='" + res['task']['uploadpath'][i+1] + "' download='" + res['task']['olduploadpath'][i+1] + "'>" + res['task']['olduploadpath'][i+1] + "</a> </td>"
+                               + "</tr>";
+                         $(".files").append(file)
+                        }
+
+                       
+                    }
+                    }
+                    
+                    //判断登录名是否是创建者，显示与隐藏ETA是否可修改
+                    var req_name=res['task']['requ_name'];
+                    // console.log(req_name);
+                    // console.log(login_name);
+                    if (res['task']['step'] != '4' && res['task']['step'] != '3') {
+
+                        if ($.trim(user_name) == $.trim(login_name)||$.trim(req_name) == $.trim(login_name)) {
+                            console.log(login_name)
+                            $('.update_eta').show();
+                            $(".eta").hide();
+                        }
+
+                        //判断登陆者是否是sw的 并且是否是创建者
+                        // if ($.trim(user_name) == $.trim(login_name)&&login_group==10) {
+                        //     //console.log(login_name)
+                        //     //oveelay  显示 
+                        //     $('.overlay_wrap').show();
+                        // }
+
+                    }
+                    // 根据step判断是否done,或cancel，显示或隐藏对应数据,4done,3cancel
+                    if (res['task']['step'] == '3') {
+                        $('.cancel_done').show();
+                        $('.cancel_tr').show();
+
+                        var cangroup = "  <div class='assign_group_show' style='line-height: 0;'>" + res['task']['cancel_group'] + "</div> ";
+                        $('.cancel_done').before(cangroup);
+
+                        $('.cancel_reason').html(res['task']['cancel_content']);
+                        $('.cancel_user').html(res['task']['cancel_user']);
+                        $('.done_cancel_val').html(res['task']['cancel_done_time']);
+                    } else if (res['task']['step'] == '4') {
+                        $('.cancel_done').show();
+                        $('.done_tr').show();
+                        $('.done_comment').html(res['task']['done_content']);
+                        $('.done_score').html(res['task']['done_score']);
+                        $('.done_user').html(res['task']['done_user']);
+                        //导线时间和导线版本
+                        $('.done_onlinetime').html(res['task']['onlinetime']);
+                        $('.done_version').html(res['task']['version']);
+
+                        $('.done_cancel_val').html(res['task']['cancel_done_time']);
+                    }
+
+
+
+    
+                    
+                    // 历史记录 若果cancel 或 done了
+                    var history_tab = '';
+                    // if(res['task']['step'] == '3'||res['task']['step'] == '4'){
+                     if(res['task']['step'] == '4'){   
+                        if(res['history'].length == 1){
+                           
+                              var group = "<div class='assign_group_show'>" + res['history'][0]['update_group'] + "</div><img src='../img/jiantouxia.png'>";
+                              history_tab += "<tr>";
+
+                              var doneorcancel="";
+                              if(res['task']['step'] == '4'){
+                                    doneorcancel="Done By:"
+                              }
+                              if(res['task']['step'] == '3'){
+                                    doneorcancel="Cancel By:"
+                              }
+                              history_tab +=
+                                "<td><span class='detail_title'>"+ doneorcancel  +"</span><span class='detail_val  creator_td'><span class='update_by'>" +
+                                res['history'][0]['username'] +
+                                "</span><div class='creator_mask_show'> <span>Tel:</span> <span class='assign_tel'>" +
+                                res['history'][0]['phone'] + 
+                                "</span> <br/> <span>LongTel:</span><span class='longTel'>"+ 
+                                res['history'][0]['long_phone'] +
+                                 " </span>  <br/><span>Email:</span><span class='create_email'> "+
+                                 res['history'][0]['email'] +
+                                 " </span> </div></span></td>"
+                            history_tab +=
+                                "<td><span class='detail_title'>Time:</span><span class='update_time detail_val'>" +
+                                res['history'][0]['update_time'] + "</span></td></tr>"
+                              history_tab +=
+                                " <tr><td colspan='2'><span class='detail_title'>Status:</span>"+
+                                  "<textarea  rows='3' name='task_description' class='status detail_val' readonly style='vertical-align: top;width:75%!important;margin-left:10px;resize:vertical; '> "+ trim(res['history'][0]['status']) + " </textarea></td> "+
+                                 "</tr>";
+                             history_tab +=
+                                "<tr class='file0'><td colspan='2'><span class='detail_title' style='vertical-align: top' >Attachment:</span>"
+                            //   +"<span class='update_attachment" +0 + " detail_val'></span>"
+                               +"<div style='display: inline-block;margin-left: -4px'>"
+                                +" <table class='update_attachment0 detail_val'>"
+                                 +"</table></div>"
+                               +"</td></tr>";
+
+                            // history_tab +=
+                            //     "<tr class='file"+0+"'><td colspan='2'><span class='detail_title'>Attachment:</span><span class='update_attachment" +
+                            //     0 + " detail_val'></span></td></tr> ";
+
+                            $('.history_wrap').append(group);
+                            $('.CandD').prepend(history_tab);
+                            // console.log(history_tab);
+                            var upfile = "";
+                            for (var j = 0; j < res['history'][0]['oldupload'].length; j=j+2) {
+                                if(res['history'][0]['upload'][j]==''){
+                                    $(".file" + 0).html("");
+                                }else{
+                                    if(res['history'][0]['oldupload'][j+1]== undefined){
+                                        upfile = "<tr><td><a href='" + res['history'][0]['upload'][j] +"' download='" + res['history'][0]['oldupload'][j] + "'>" + res['history'][0]['oldupload'][j] + "</a></td></tr>";
+                                        $(".update_attachment0").append(upfile);
+                                    } else{
+                                     upfile = "<tr>"
+                                            + "  <td><a href='" + res['history'][0]['upload'][j] +"' download='" + res['history'][0]['oldupload'][j] + "'>" + res['history'][0]['oldupload'][j] + "</a></td>"
+                                            + "  <td><a href='" + res['history'][0]['upload'][j+1] +"' download='" + res['history'][0]['oldupload'][j+1] + "'>" + res['history'][0]['oldupload'][j+1] + "</a></td>"
+                                             +"</tr>";
+                                       $(".update_attachment0").append(upfile);
+                                    }
+                              
+                                }
+                            }
+                        }else  {
+                            // if(res['history'].length > 1)
+
+                            for (var i = 0; i < res['history'].length-1; i++) {
+                                var group = "<div class='assign_group_show'>" + res['history'][i][
+                                'update_group'
+                            ] + "</div><img src='../img/jiantouxia.png'>";
+                            history_tab =
+                                " <div class='task_history'> <table class='layui-table detailhistory_tab' lay-skin='nob'>";
+                            history_tab +=
+                                "<colgroup><col width='50%'><col width='50%'></colgroup><tbody><tr>";
+                            history_tab +=
+                                "<td><span class='detail_title'>Update By:</span><span class='detail_val  creator_td'><span class='update_by'>" +
+                                res['history'][i]['username'] +
+                                "</span><div class='creator_mask_show'> <span>Tel:</span> <span class='assign_tel'>" +
+                                res['history'][i]['phone'] + 
+                                "</span> <br/> <span>LongTel:</span><span class='longTel'>"+ 
+                                res['history'][i]['long_phone'] +
+                                 " </span>  <br/> <span>Email:</span><span class='create_email'> "+
+                                 res['history'][i]['email'] +
+                                 " </span> </div></span></td>"
+                            history_tab +=
+                                "<td><span class='detail_title'>Time:</span><span class='update_time detail_val'>" +
+                                res['history'][i]['update_time'] + "</span></td></tr>"
+
+                             history_tab +=
+                                " <tr><td colspan='2'><span class='detail_title'>Status:</span>"+
+                                  "<textarea  rows='3' name='task_description' class='status detail_val' readonly style='vertical-align: top;width:75%!important ;margin-left:10px;resize:vertical;'> "+ trim(res['history'][i]['status']) + " </textarea></td> "+
+                                 "</tr>";
+                                 history_tab +=
+                                " <tr>"+
+                                 "<td><span class='detail_title'>Overlay Ver:</span><span class='status detail_val'>" +
+                                    res['history'][i]['version'] + "</span></td>"+
+                                 "</tr>";
+                            if (res['history'][i]['group'] != null && res['history'][i]['assign_username'] != null) {
+                                history_tab +=
+                                    " <tr><td colspan='2'><span class='detail_title'>To:</span><span class='detail_val  creator_td'><span class='update_assign'>" +
+                                    res['history'][i]['group'] + ' ' + res['history'][i][
+                                        'assign_username'
+                                    ] +
+                                    "</span><div class='creator_mask_show'><span>Tel:</span><span class='assign_tel'>" +
+                                    res['history'][i]['assign_user_phone'] +
+                                     "</span> <br/> <span>LongTel:</span><span class='assign_user_longphone'>"+ 
+                                     res['history'][i]['assign_user_longphone'] +
+                                   " </span> <br/>  <span>email:</span><span class='assign_email'> "+ 
+                                    res['history'][i]['assign_email'] +
+                                    "</span></div></span></td></tr>";
+                            }
+                            // history_tab +=
+                            //     "<tr class='file"+i+"'><td colspan='2'><span class='detail_title'>Attachment:</span><span class='update_attachment" +
+                            //     i + " detail_val'></span></td></tr> </tbody></div>";
+                            history_tab +=
+                                "<tr class='file"+i+"'><td colspan='2'><span class='detail_title' style='vertical-align: top' >Attachment:</span>"
+                            //   +"<span class='update_attachment" +0 + " detail_val'></span>"
+                               +"<div style='display: inline-block;margin-left: -4px'>"
+                                +" <table class='update_attachment"+i+" detail_val'>"
+                                 +"</table></div>"
+                               +"</td></tr>";
+
+                            $('.history_wrap').append(group);
+                            $('.history_wrap').append(history_tab);
+                            var upfile = "";
+                            for (var j = 0; j < res['history'][i]['oldupload'].length; j=j+2) {
+                                if(res['history'][i]['upload'][j]==''){
+                                    $(".file" + i).html("");
+                                }else{
+
+                                    if(res['history'][i]['oldupload'][j+1]== undefined){
+                                        upfile = "<tr><td><a href='" + res['history'][i]['upload'][j] +"' download='" + res['history'][i]['oldupload'][j] + "'>" + res['history'][i]['oldupload'][j] + "</a></td></tr>";
+                                        $(".update_attachment" + i).append(upfile);
+                                    } else{
+                                     upfile = "<tr>"
+                                            + "  <td><a href='" + res['history'][i]['upload'][j] +"' download='" + res['history'][i]['oldupload'][j] + "'>" + res['history'][i]['oldupload'][j] + "</a></td>"
+                                            + "  <td><a href='" + res['history'][i]['upload'][j+1] +"' download='" + res['history'][i]['oldupload'][j+1] + "'>" + res['history'][i]['oldupload'][j+1] + "</a></td>"
+                                             +"</tr>";
+                                     $(".update_attachment" + i).append(upfile);
+                                    }
+                                //     upfile = "<tr><td><a href='" + res['history'][i]['upload'][j] +
+                                //     "' download='" + res[
+                                //         'history'][i]['oldupload'][j] + "'>" + res[
+                                //         'history'][i]['oldupload'][j] + "</a></td></tr>";
+                                //    $(".update_attachment" + i).append(upfile)
+                                }
+                            }
+                        }
+
+
+                           lengthhis=res['history'].length-1;
+                            var lasthistory="";
+                             var grouplast= "<div class='assign_group_show'>" + res['history'][lengthhis]['update_group'] + "</div><img src='../img/jiantouxia.png'>";
+                              lasthistory += "<tr>";
+                              var doc="";
+                              if(res['task']['step'] == '4'){
+                                doc="Done By:"
+                              }
+                              if(res['task']['step'] == '3'){
+                                doc="Cancel By:"
+                              }
+
+                              lasthistory +=
+                                "<td><span class='detail_title'>"+ doc  +"</span><span class='detail_val  creator_td'><span class='update_by'>" +
+                                res['history'][lengthhis]['username'] +
+                                "</span><div class='creator_mask_show'> <span>Tel:</span> <span class='assign_tel'>" +
+                                res['history'][lengthhis]['phone'] + 
+                                "</span> <br/> <span>LongTel:</span><span class='longTel'>"+ 
+                                res['history'][lengthhis]['long_phone'] +
+                                 " </span> <br/> <span>Email:</span><span class='create_email'> "+
+                                 res['history'][lengthhis]['email'] +
+                                 " </span> </div></span></td>"
+                            lasthistory +=
+                                "<td><span class='detail_title'>Time:</span><span class='update_time detail_val'>" +
+                                res['history'][lengthhis]['update_time'] + "</span></td></tr>"
+                          
+                              lasthistory +=
+                                " <tr><td colspan='2'><span class='detail_title'>Status:</span>"+
+                    "<textarea  rows='3' name='task_description' class='status detail_val' readonly style='vertical-align: top;width:75%!important;margin-left:10px;resize:vertical;'> "+ 
+                        trim(res['history'][lengthhis]['status']) + " </textarea></td> "+
+                                 "</tr>";
+                            //  lasthistory +=
+                            //     "<tr class='file"+lengthhis+"'><td colspan='2'><span class='detail_title'>Attachment:</span><span class='update_attachment" +
+                            //     i + " detail_val'></span></td></tr> ";
+
+                                lasthistory +=
+                                "<tr class='file"+lengthhis+"'><td colspan='2'><span class='detail_title' style='vertical-align: top' >Attachment:</span>"
+                               +"<div style='display: inline-block;margin-left: -4px'>"
+                                +" <table class='update_attachment"+lengthhis+" detail_val'>"
+                                 +"</table></div>"
+                               +"</td></tr>";   
+                            $('.history_wrap').append(grouplast);
+
+                            $('.CandD').prepend(lasthistory);
+                            // console.log(lasthistory);
+                            var upfile = "";
+                             
+                            for (var j = 0; j < res['history'][lengthhis]['oldupload'].length; j=j+2) {
+                                if(res['history'][lengthhis]['upload'][j]==''){
+                                    $(".file" + lengthhis).html("");
+                                }else{
+
+                                    if(res['history'][lengthhis]['oldupload'][j+1]== undefined){
+                                        upfile = "<tr><td><a href='" + res['history'][lengthhis]['upload'][j] +"' download='" + res['history'][lengthhis]['oldupload'][j] + "'>" + res['history'][lengthhis]['oldupload'][j] + "</a></td></tr>";
+                                        $(".update_attachment" + lengthhis).append(upfile)
+                                    } else{
+                                     upfile = "<tr>"
+                                            + "  <td><a href='" + res['history'][lengthhis]['upload'][j] +"' download='" + res['history'][lengthhis]['oldupload'][j] + "'>" + res['history'][lengthhis]['oldupload'][j] + "</a></td>"
+                                            + "  <td><a href='" + res['history'][lengthhis]['upload'][j+1] +"' download='" + res['history'][lengthhis]['oldupload'][j+1] + "'>" + res['history'][lengthhis]['oldupload'][j+1] + "</a></td>"
+                                             +"</tr>";
+                                    $(".update_attachment" + lengthhis).append(upfile)
+                                    }
+
+
+                                //     upfile = "<tr><td><a href='" + res['history'][lengthhis]['upload'][j] +
+                                //     "' download='" + res[
+                                //         'history'][lengthhis]['oldupload'][j] + "'>" + res[
+                                //         'history'][lengthhis]['oldupload'][j] + "</a></td></tr>";
+                                //    $(".update_attachment" + lengthhis).append(upfile)
+                                }
+                            }
+                        }
+                    }else{
+                        
+                      
+                    if (res['history'].length != 0) {
+
+                        for (var i = 0; i < res['history'].length; i++) {
+                            var group = "<div class='assign_group_show'>" + res['history'][i][
+                                'update_group'
+                            ] + "</div><img src='../img/jiantouxia.png'>";
+
+                            history_tab =
+                                " <div class='task_history'> <table class='layui-table detailhistory_tab' lay-skin='nob'>";
+                            history_tab +=
+                                "<colgroup><col width='50%'><col width='50%'></colgroup><tbody><tr>";
+                            history_tab +=
+                                "<td><span class='detail_title'>Update By:</span><span class='detail_val  creator_td'><span class='update_by'>" +
+                                res['history'][i]['username'] +
+                                "</span><div class='creator_mask_show'> <span>Tel:</span> <span class='assign_tel'>" +
+                                res['history'][i]['phone'] + 
+                                "</span> <br/> <span>LongTel:</span><span class='longTel'>"+ 
+                                res['history'][i]['long_phone'] +
+                                 " </span> <br/> <span>Email:</span><span class='create_email'> "+
+                                 res['history'][i]['email'] +
+                                 " </span> </div></span></td>"
+                            history_tab +=
+                                "<td><span class='detail_title'>Time:</span><span class='update_time detail_val'>" +
+                                res['history'][i]['update_time'] + "</span></td></tr>"
+                            history_tab +=
+                                " <tr><td colspan='2'><span class='detail_title'>Status:</span>"+
+
+                                  "<textarea  rows='3' name='task_description' class='status detail_val' readonly style='vertical-align: top;width:75%!important; resize:vertical;margin-left:10px'> "+ trim(res['history'][i]['status']) + " </textarea></td> "+
+                                 "</tr>";
+                                 history_tab +=
+                                " <tr>"+
+                                 "<td><span class='detail_title'>Overlay Ver:</span><span class='status detail_val'>" +
+                                    res['history'][i]['version'] + "</span></td>"+
+                                 "</tr>";
+                            if (res['history'][i]['group'] != null && res['history'][i]['assign_username'] != null) {
+                                history_tab +=
+                                    " <tr><td colspan='2'><span class='detail_title'>To:</span><span class='detail_val  creator_td'><span class='update_assign'>" +
+                                    res['history'][i]['group'] + ' ' + res['history'][i][
+                                        'assign_username'
+                                    ] +
+                                    "</span><div class='creator_mask_show'><span>Tel:</span><span class='assign_tel'>" +
+                                    res['history'][i]['assign_user_phone'] +
+                                     "</span> <br/> <span>LongTel:</span><span class='assign_user_longphone'>"+ 
+                                     res['history'][i]['assign_user_longphone'] +
+                                   " </span> <br/> <span>email:</span><span class='assign_email'> "+ 
+                                    res['history'][i]['assign_email'] +
+                                    "</span></div></span></td></tr>";
+                            }
+                              
+
+                            // history_tab +=
+                            //     "<tr class='file"+i+"'><td colspan='2'><span class='detail_title'>Attachment:</span><span class='update_attachment" +
+                            //     i + " detail_val'></span></td></tr> </tbody></div>";
+                            history_tab +=
+                                "<tr class='file"+i+"'><td colspan='2'><span class='detail_title' style='vertical-align: top' >Attachment:</span>"
+                               +"<div style='display: inline-block;margin-left: -4px'>"
+                                +" <table class='update_attachment"+i+" detail_val'>"
+                                 +"</table></div>"
+                               +"</td></tr>";
+                            $('.history_wrap').append(group);
+                            $('.history_wrap').append(history_tab);
+                            var upfile = "";
+                            for (var j = 0; j < res['history'][i]['oldupload'].length; j=j+2) {
+                                if(res['history'][i]['upload'][j]==''){
+                                    $(".file" + i).html("");
+                                }else{
+
+                                    if(res['history'][i]['oldupload'][j+1]== undefined){
+                                        upfile = "<tr><td><a href='" + res['history'][i]['upload'][j] +"' download='" + res['history'][i]['oldupload'][j] + "'>" + res['history'][i]['oldupload'][j] + "</a></td></tr>";
+                                        $(".update_attachment" + i).append(upfile)
+                                    } else{
+                                     upfile = "<tr>"
+                                            + "  <td><a href='" + res['history'][i]['upload'][j] +"' download='" + res['history'][i]['oldupload'][j] + "'>" + res['history'][i]['oldupload'][j] + "</a></td>"
+                                            + "  <td><a href='" + res['history'][i]['upload'][j+1] +"' download='" + res['history'][i]['oldupload'][j+1] + "'>" + res['history'][i]['oldupload'][j+1] + "</a></td>"
+                                             +"</tr>";
+                                 $(".update_attachment" + i).append(upfile)
+                                    }
+
+
+
+                                //     upfile = "<tr><td><a href='" + res['history'][i]['upload'][j] +
+                                //     "' download='" + res[
+                                //         'history'][i]['oldupload'][j] + "'>" + res[
+                                //         'history'][i]['oldupload'][j] + "</a></td></tr>";
+                                //    $(".update_attachment" + i).append(upfile)
+                                }
+                               
+                            }
+                        }
+                    }
+
+                    }
+
+
+             // //渲染历史记录
+                    // var history_tab = '';
+
+                    // if (res['history'].length != 0) {
+
+                    //     for (var i = 0; i < res['history'].length; i++) {
+                    //         var group = "<div class='assign_group_show'>" + res['history'][i][
+                    //             'update_group'
+                    //         ] + "</div><img src='../img/jiantouxia.png'>";
+
+                    //         history_tab =
+                    //             " <div class='task_history'> <table class='layui-table detailhistory_tab' lay-skin='nob'>";
+                    //         history_tab +=
+                    //             "<colgroup><col width='50%'><col width='50%'></colgroup><tbody><tr>";
+                    //         history_tab +=
+                    //             "<td><span class='detail_title'>Update By:</span><span class='detail_val  creator_td'><span class='update_by'>" +
+                    //             res['history'][i]['username'] +
+                    //             "</span><div class='creator_mask_show'> <span>Tel:</span> <span class='assign_tel'>" +
+                    //             res['history'][i]['phone'] + 
+                    //             "</span> <span>LongTel:</span><span class='longTel'>"+ 
+                    //             res['history'][i]['long_phone'] +
+                    //              " </span> <span>Email:</span><span class='create_email'> "+
+                    //              res['history'][i]['email'] +
+                    //              " </span> </div></span></td>"
+                    //         history_tab +=
+                    //             "<td><span class='detail_title'>Time:</span><span class='update_time detail_val'>" +
+                    //             res['history'][i]['update_time'] + "</span></td></tr>"
+                    //         history_tab +=
+                    //             " <tr><td colspan='2'><span class='detail_title'>Status:</span>"+
+
+                    //               "<textarea  rows='2' name='task_description' class='status detail_val' readonly style='vertical-align: top;width:650px;margin-left:10px'> "+ res['history'][i]['status'] + " </textarea></td> "+
+                    //              "</tr>";
+                    //              history_tab +=
+                    //             " <tr>"+
+                    //              "<td><span class='detail_title'>Overlay Ver:</span><span class='status detail_val'>" +
+                    //                 res['history'][i]['version'] + "</span></td>"+
+                    //              "</tr>";
+                    //         if (res['history'][i]['group'] != null && res['history'][i]['assign_username'] != null) {
+                    //             history_tab +=
+                    //                 " <tr><td colspan='2'><span class='detail_title'>To:</span> <span class='detail_val  creator_td'><span class='update_assign'>" +
+                    //                 res['history'][i]['group'] + ' ' + res['history'][i][
+                    //                     'assign_username'
+                    //                 ] +
+                    //                 "</span><div class='creator_mask_show'><span>Tel:</span><span class='assign_tel'>" +
+                    //                 res['history'][i]['assign_user_phone'] +
+                    //                  "</span> <span>LongTel:</span><span class='assign_user_longphone'>"+ 
+                    //                  res['history'][i]['assign_user_longphone'] +
+                    //                " </span> <span>email:</span><span class='assign_email'> "+ 
+                    //                 res['history'][i]['assign_email'] +
+                    //                 "</span></div></span></td></tr>";
+                    //         }
+                              
+
+                    //         history_tab +=
+                    //             "<tr class='file"+i+"'><td colspan='2'><span class='detail_title'>Attachment:</span><span class='update_attachment" +
+                    //             i + " detail_val'></span></td></tr> </tbody></div>";
+                    //         $('.history_wrap').append(group);
+                    //         $('.history_wrap').append(history_tab);
+                    //         var upfile = "";
+                    //         for (var j = 0; j < res['history'][i]['oldupload'].length; j++) {
+                    //             if(res['history'][i]['upload'][j]==''){
+                    //                 $(".file" + i).html("");
+                    //             }else{
+                    //                 upfile = "<a href='" + res['history'][i]['upload'][j] +
+                    //                 "' download='" + res[
+                    //                     'history'][i]['oldupload'][j] + "'>" + res[
+                    //                     'history'][i]['oldupload'][j] + "</a>";
+                    //                $(".update_attachment" + i).append(upfile)
+                    //             }
+                               
+                    //         }
+                    //     }
+                    // }
+                    //动态渲染部门
+                    $.ajax({
+                        url: '../admin/handle.php?action=get_group_list_create',
+                        type: 'GET',
+                        dataType: 'json',
+                        processData: false,
+                        contentType: false,
+                        success: function (res) {
+                            console.log(res['data'])
+                            var groupstr = "";
+                            for (var i = 0; i < res['data'].length; i++) {
+                                if(res['data'][i]['id']!=13){
+                                       groupstr = "<option value='" + res['data'][i]['id'] +
+                                    "'>" + res['data'][i]['group'] + "</option>";
+                                $(".select_group").append(groupstr);
+
+                                }
+                            }
+                            form.render('select');
+                            //根据部门，工站，专案，渲染人员
+                            $.ajax({
+                                type: "post",
+                                url: "./create_task.php?action=station_search1",
+                                dataType: "json",
+                                data: {
+                                    'assign': res['data'][0]['id'],
+                                    'station': station,
+                                    'project': project_id
+                                },
+                                success: function (res) {
+                                    $('#assign_user').show();
+                                    $('#assign_user tbody').html("");
+                                    var assign_table = ""
+                                    for (var i = 0; i < res['station'].length; i++) {
+                                        if (res['station'][i]['name'] !=
+                                            undefined) {
+                                            var assign_name = res['station']
+                                                [i]['name'].replace(/ /g,
+                                                    '_');
+                                            assign_table =
+                                                "<tr><td style='padding:0 10px'>" +
+                                                res['station'][i]['name'] +
+                                                "</td><td><select name='assign_user_select' style='display: block; min-width:80px' class='assign" +
+                                                assign_name +
+                                                "'><option value='0'>-----</option></select></td></tr>";
+                                            $('#assign_user tbody').append(
+                                                assign_table);
+                                            var assign_option = "";
+                                            $('.assign_user_list').html("");
+                                            for (var j = 0; j < res[
+                                                    'station'][i][
+                                                    'user_list'
+                                                ].length; j++) {
+                                                if (res['station'][i][
+                                                        'user_list'
+                                                    ][j]['checked'] == '1') {
+                                                    assign_option =
+                                                        "<option value='" +
+                                                        res['station'][i][
+                                                            'user_list'
+                                                        ][j]['id'] +
+                                                        "' selected>" + res[
+                                                            'station'][i][
+                                                            'user_list'
+                                                        ][j]['username'] +
+                                                        "</option>";
+                                                } else if (res['station'][i]
+                                                    ['user_list'][j][
+                                                        'checked'
+                                                    ] == '2') {
+                                                    assign_option =
+                                                        "<option value=" +
+                                                        res['station'][i][
+                                                            'user_list'
+                                                        ][j]['id'] + ">" +
+                                                        res['station'][i][
+                                                            'user_list'
+                                                        ][j]['username'] +
+                                                        "</option>";
+                                                }
+                                                $('.assign' + assign_name).append(
+                                                    assign_option)
+                                            }
+                                        }
+
+                                    }
+                                }
+                            })
+                        }
+
+                    })
+                    //根据部门切换，更换人员，
+                    form.on('select(assign)', function (data) {
+                        var assign_id = data.value;
+                        var assign = $(".select_group  option:selected").text();
+                        if (assign == 'F1') {
+                            $("#assign_user").hide();
+                        } else {
+                            $.ajax({
+                                type: "post",
+                                url: "./create_task.php?action=station_search1",
+                                dataType: "json",
+                                data: {
+                                    'assign': assign_id,
+                                    'station': station,
+                                    'project': project_id
+                                },
+                                success: function (res) {
+                                    $('#assign_user').show();
+                                    $('#assign_user tbody').html("");
+                                    var assign_table = ""
+                                    for (var i = 0; i < res['station'].length; i++) {
+                                        if (res['station'][i]['name'] !=
+                                            undefined) {
+                                            var assign_name = res['station'][i]
+                                                [
+                                                    'name'
+                                                ].replace(/ /g, '_');
+                                            assign_table =
+                                                "<tr><td style='padding:0 10px'>" +
+                                                res['station'][i]['name'] +
+                                                "</td><td><select name='assign_user_select' style='display: block; min-width:80px' class='assign" +
+                                                assign_name +
+                                                "'><option value='0'>-----</option></select></td></tr>";
+                                            $('#assign_user tbody').append(
+                                                assign_table);
+                                            var assign_option = "";
+                                            $('.assign_user_list').html("");
+                                            for (var j = 0; j < res['station'][
+                                                    i
+                                                ][
+                                                    'user_list'
+                                                ].length; j++) {
+                                                if (res['station'][i][
+                                                        'user_list'
+                                                    ][
+                                                        j
+                                                    ]['checked'] == '1') {
+                                                    assign_option =
+                                                        "<option value='" + res[
+                                                            'station'][i][
+                                                            'user_list'
+                                                        ][j]['id'] +
+                                                        "' selected>" +
+                                                        res['station'][i][
+                                                            'user_list'
+                                                        ][j]['username'] +
+                                                        "</option>";
+                                                } else if (res['station'][i][
+                                                        'user_list'
+                                                    ][j]['checked'] == '2') {
+                                                    assign_option =
+                                                        "<option value=" + res[
+                                                            'station'][i][
+                                                            'user_list'
+                                                        ][j]['id'] + ">" + res[
+                                                            'station'][i][
+                                                            'user_list'
+                                                        ][j]['username'] +
+                                                        "</option>";
+                                                }
+                                                $('.assign' + assign_name).append(
+                                                    assign_option)
+                                            }
+                                        }
+
+                                    }
+                                }
+                            })
+                        }
+                    });
+                    //  根据contant值显示不同的更新表单
+                    var operateradio = [{
+                        'id': '1',
+                        'val': 'Update'
+                    },  {
+                        'id': '2',
+                        'val': 'Done'
+                    },{
+                        'id': '3',
+                        'val': 'Block'
+                    }, {
+                        'id': '4',
+                        'val': 'Cancel'
+                    }, {
+                        'id': '5',
+                        'val': 'Tranform'
+                    }]
+                    if (res['content'] == "6") { //update,done,block,cancel,assign都显示
+                        $(".updateform").show();
+                        $(".radiodiv").html("");
+                        for (var i = 0; i < 5; i++) {
+                            var str = "<input type='radio' name='operate' value='" + operateradio[i]
+                                ['id'] + "' title='" + operateradio[i]['val'] +
+                                "' lay-filter='operator'>";
+
+                            $(".radiodiv").append(str);
+                        }
+
+                        //如果是sw 则显示
+                        if (login_group==10) {
+                            $('.overlay_wrap').show();
+                        }
+
+
+
+                        form.render('radio');
+
+                    } else if (res['content'] == "1") { //update,done,block,cancel都显示
+                        $(".updateform").show();
+                        $(".radiodiv").html("");
+                        for (var i = 0; i < 4; i++) {
+                            var str = "<input type='radio' name='operate' value='" + operateradio[i]
+                                ['id'] + "' title='" + operateradio[i]['val'] +
+                                "' lay-filter='operator'>";
+                            $(".radiodiv").append(str);
+
+                        }
+                          //如果是sw 则显示
+                        if (login_group==10) {
+                            $('.overlay_wrap').show();
+                        }
+                        form.render('radio');
+                    } else if (res['content'] == "2") { //done,cancel都显示
+                        $(".updateform").show();
+                        $(".statusdiv").hide();
+                        $("#assign_user").html('');
+                        $(".filesdiv").hide();
+                        $(".assigndiv").hide();
+                        $(".radiodiv").html("");
+                        for (var i = 0; i < 4; i++) {
+                            if (i == '1' || i == '3') {
+                                var str = "<input type='radio' name='operate' value='" +
+                                    operateradio[i]['id'] + "' title='" + operateradio[i]['val'] +
+                                    "' lay-filter='operator'>";
+                                $(".radiodiv").append(str);
+                            }
+                        }
+                          //如果是sw 则显示
+                        if (login_group==10) {
+                            $('.overlay_wrap').show();
+                        }
+                        form.render('radio');
+                    } else if (res['content'] == "7") { //update,block,cancel,transfrom都显示
+                        $(".updateform").show();
+                        $(".radiodiv").html("");
+                        for (var i = 0; i < 5; i++) {
+                            if (i != '1') {
+                                var str = "<input type='radio' name='operate' value='" +
+                                    operateradio[i]['id'] + "' title='" + operateradio[i]['val'] +
+                                    "' lay-filter='operator'>";
+                                $(".radiodiv").append(str);
+                            }
+                        }
+                          //如果是sw 则显示
+                        if (login_group==10) {
+                            $('.overlay_wrap').show();
+                        }
+                        form.render('radio');
+                    } else if (res['content'] == "4") { //update,block都显示
+                        $(".updateform").show();
+                        $(".radiodiv").html("");
+                        for (var i = 0; i < 4; i++) {
+                            if (i == '0' || i == '2') {
+                                var str = "<input type='radio' name='operate' value='" +
+                                    operateradio[i]['id'] + "' title='" + operateradio[i]['val'] +
+                                    "' lay-filter='operator'>";
+                                $(".radiodiv").append(str);
+                            }
+                        }
+                          //如果是sw 则显示
+                        if (login_group==10) {
+                            $('.overlay_wrap').show();
+                        }
+                        form.render('radio');
+                    } else if (res['content'] == "5") { //都不显示
+                    }
+
+              
+                }
+            })
+            // 多文件上传
+            var demoListView = $('#demoList');
+            var files;
+            var uploadListIns = upload.render({
+                elem: '#testList',
+                // url: baseUrl + '/soc/search',
+                method: 'post',
+                accept: 'file',
+                // exts: 'csv',
+                multiple: true,
+                number: 50,
+                auto: false,
+                // bindAction: '#testListAction',
+                choose: function (obj) {
+                    // 判断是否选择搜索条件
+                    if ($('#project').val() == '' || $('#build').val() == '' || $('#date').val() ==
+                        '') {
+                        layer.msg('请选择搜索条件', {
+                            icon: 3
+                        });
+                    } else {
+                        files = this.files = obj.pushFile(); //将每次选择的文件追加到文件队列
+                        //读取本地文件
+                        obj.preview(function (index, file, result) {
+                            var tr = $(['<tr id="upload-' + index + '">', '<td>' + file.name +
+                                '</td>', '<td>' + (file.size / 1014).toFixed(1) +
+                                'kb</td>', '<td>',
+                                '<button class="layui-btn layui-btn-xs layui-btn-danger demo-delete">Delete</button>',
+                                '</td>', '</tr>'
+                            ].join(''));
+
+                            //单个重传
+                            tr.find('.demo-reload').on('click', function () {
+                                obj.upload(index, file);
+                            });
+
+                            //删除
+                            tr.find('.demo-delete').on('click', function () {
+                                delete files[index]; //删除对应的文件
+                                tr.remove();
+                                uploadListIns.config.elem.next()[0].value = ''; //清空 input file 值，以免删除后出现同名文件不可选
+                            });
+
+                            demoListView.append(tr);
+                        });
+                    }
+                }
+            });
+            //时间修改
+
+            $('.Update_btn').click(function () {
+                var update_eta_time = $('#update_eta').val();
+                $.ajax({
+                    url: 'task.php?action=update_eta',
+                    type: 'POST',
+                    dataType: 'json',
+
+                    data: {
+                        'task_id': task_id,
+                        'update_eta_time': update_eta_time
+                    },
+                    success: function (res) {
+                        if (res == 'success') {
+                            alert('Update ETA Success!')
+                            var scrollTop = window.location.search.slice(1).split('&')[1].split('=')[1];
+                            window.location.href = './detail_task.html?task_id=' + task_id + '&scrollTop=' + scrollTop
+                        } else {
+                            alert('Add error')
+                        }
+                        console.log(res)
+                    }
+                })
+            })
+
+            //提交
+            $("#task_add").click(function (e) {
+                e.preventDefault() //阻止submit默认行为，避免与ajax冲突
+                var form = new FormData();
+                for (let i in files) {
+
+                    form.append("upload[]", files[i])
+                }
+                form.append('task_id', task_id);
+                var operat_id = $("input[name='operate']:checked").val()
+                if (operat_id == '1') { //1update
+                    if ($.trim($('.insert_status').val()) == "") {
+                        alert('Status no null');
+                        return false;
+                    }
+
+
+                    form.append('status', $('.insert_status').val());
+                    form.append('assign', $("select option:selected").val());
+                    if ($("select[name='assign_user_select']").val() == "0" && $(
+                            ".select_group  option:selected").text() != 'F1') {
+                        alert('Please select assign user!');
+                        return false;
+                    }
+                    form.append('assign_user_id', $("select[name='assign_user_select']").val());
+                    
+                    form.append('version',$('#Version').val());
+                    // console.log($("select[name='assign_user_select']").val());
+                    // return false;
+                    // for.append(``)
+                    action = 'task_update'
+                } else if (operat_id == '2') { //2 done
+                    //不打分不得提交
+                    if ($.trim($('.insert_status').val()) == "") {
+                        alert('Status no null');
+                        return false;
+                    }
+                    // if ($('.layui-icon-rate-solid').length == 0) {
+                    //     alert('Please rate!')
+                    //     return false;
+                    // } else if ($('#score_comment').val() == "") { //评论为不得提交
+                    //     alert('Please comment!')
+                    //     return false;
+                    // }
+                    //导线时间
+                    if($('#onlineTime').val()== ""){
+                        alert('onlineTime not null');
+                        return false;
+                    }
+                    // //导线版本
+                    // if($('#Version').val()==""){
+                    //     alert('overlay Version not null');
+                    //     return false;
+                    // }
+                    form.append('onlinetime',$('#onlineTime').val());
+                    form.append('version',$('#Version').val());
+
+ 
+                    form.append('status', $('.insert_status').val());
+                    form.append('done_content', $('#score_comment').val());
+                    form.append('done_score', $('.layui-icon-rate-solid').length);
+
+                    form.append('version',$('#Version').val());
+
+                    action = 'task_done'
+                } else if (operat_id == '3') { //3 block
+                    if ($.trim($('.insert_status').val()) == "") {
+                        alert('Status no null');
+                        return false;
+                    }
+                    form.append('version',$('#Version').val());
+                    form.append('status', $('.insert_status').val());
+
+                    form.append('version',$('#Version').val());
+                    action = 'task_block'
+                } else if (operat_id == '4') { //4 cancel
+                    if ($('#cancel_reason').val() == "") {
+                        alert('Please comment!')
+                        return false;
+                    }
+                    form.append('version',$('#Version').val());
+                    form.append('status', $('.insert_status').val());
+                    form.append('cancel_content', $('#cancel_reason').val());
+                    form.append('version',$('#Version').val());
+
+                    action = 'task_cancel'
+                } else if (operat_id == '5') {
+                    
+                    var tranform_id = $('select[name="transform"]').val();
+                    if (!tranform_id) {
+                        alert('Please select transfomer');
+                        return false;
+                    }
+                    
+                    form.append('assign_user', tranform_id);
+
+                    form.append('version',$('#Version').val());
+
+                    action = 'task_assign_user';
+                }
+                if (operat_id == '1' || operat_id == '2' || operat_id == '3' || operat_id == '4' ||
+                    operat_id == '5') {
+                    // console.log(task_id);
+                    // return false;
+                    $.ajax({
+                        url: 'task.php?action=' + action,
+                        type: 'POST',
+                        dataType: 'json',
+                        processData: false,
+                        contentType: false,
+                        data: form,
+                        success: function (res) {
+                            var scrollTop = window.location.search.slice(1).split('&')[1].split('=')[1];
+                            if (res == 'success') {
+                                if (action == 'task_assign_user') {
+                                    alert('Transform success!')
+                                }
+
+                                window.location.href = './detail_task.html?task_id=' +
+                                    task_id + '&scrollTop=' + scrollTop
+                            } else {
+                                alert('Please check input message again!')
+                            }
+                            console.log(res)
+                            var layuiTable = parent.$('.layui-table-main');
+                            setTimeout(function(){
+                                if(layuiTable!=null&&layuiTable.length>0){
+                                    parent.$('.layui-table-main').scrollTop(scrollTop)
+                                }
+                            },50)
+                            if(parent.$('#alltask')[0].className.indexOf("layui-btn-normal")!=-1){
+                                parent.$('#alltask').click();
+                            }else{
+                                parent.$('#mytask').click();
+                            }
+                        }
+                    })
+                } else {
+                    alert('Please select your operate!');
+                    return false;
+                }
+
+
+            })
+        });
+    </script>
+    <script>
+    </script>
+</body>
+
+</html>

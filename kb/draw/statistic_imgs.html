@@ -1,0 +1,202 @@
+<?php
+require_once "../../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>add_build</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+    <style type="text/css">
+    	.new-task {
+    		margin: 0 auto;
+            background: #fff;
+            /*box-shadow: 0 12px 16px 0 rgba(0,0,0,.12);*/
+            margin-top:50px;
+            width: 1200px;
+        }
+		a:hover{
+              background: rgb(240, 236, 236);
+		}
+    </style>
+</head>
+<body>
+	<div class="new-task">
+		<form class="layui-form" action="">
+			<div class="layui-form-item">
+				<label class="layui-form-label">Project:</label>
+				<div class="layui-input-inline">
+					<select name="search_project" class="search_project" lay-filter="search_project" lay-verify="required">
+					</select>
+				</div>
+				<label class="layui-form-label">Stage:</label>
+				<div class="layui-input-inline">
+					<select name="search_stage" class="search_stage" lay-filter="search_stage" lay-verify="required">
+					</select>
+				</div>
+				<label class="layui-form-label">Chart:</label>
+				<div class="layui-input-inline">
+					<select name="sel_meth" class="sel_meth" lay-verify="required">
+					</select>
+				</div>
+				<div >
+					<!-- <button class="layui-btn" lay-submit lay-filter="formDemo">View Chart</button> -->
+					<button class="layui-btn layui-btn-normal alltask">View Chart</button>
+					<button type="reset" class="layui-btn layui-btn-primary">Reset</button>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="analysis_chart"></div>
+
+<script src="../../js/jquery.js"></script>
+<script src="../../layui/layui.js"></script>
+<script src='../filter/x-layui.js'></script>
+<script>
+//Demo
+layui.use(['form', 'jquery',], function(){
+	var form = layui.form;
+	var $ = layui.jquery;
+
+	var chart_array = new Array("imgcolumn.php","imgcolumn3D.php","imgline.php","imgarea.php","imgbar.php","imgbar3D.php","imgpie.php","imgpie3D.php","imgpie_explode.php");
+
+	$.ajax({
+		url: './search_handle.php?action=project_list',
+		type: 'get',
+		dataType: 'json',
+		success: function (res) {
+			// console.log(res)
+			var projectstr = "";
+			var stagestr = "<option value='0'>All</option>";
+			$('.search_stage').append(stagestr);
+			if (res) {
+				for (var i = 0; i < res['project'].length; i++) {
+					projectstr = "<option value='" + res['project'][i]['project_id'] + "'>" + res['project'][i]['project'] + "</option>"
+					$('.search_project').append(projectstr);
+				}
+				for (var i = 0; i < res['build'].length; i++) {
+					stagestr = "<option value='" + res['build'][i]['build_id'] + "'>" + res['build'][i]['build'] + "</option>"
+					$('.search_stage').append(stagestr);
+				}
+				form.render('select')
+			}
+
+			for (var i = 0; i < chart_array.length; i++) {
+				var n=chart_array[i].replace("img","");
+				n=n.replace(".php","");
+				datastr = "<option value='" + chart_array[i] + "'>" + n + "</option>"
+				$('.sel_meth').append(datastr);
+			}
+			form.render('select')
+		}
+	})
+
+	form.on('select(search_project)', function(data){
+		// console.log(data.elem); //得到select原始DOM对象
+		// console.log(data.value); //得到被选中的值
+		// console.log(data.othis); //得到美化后的DOM对象
+		$.ajax({
+			url: './search_handle.php?action=stage_list&project_id='+data.value,
+			type: 'get',
+			dataType: 'json',
+			success: function (res) {
+				// console.log(res)
+				$(".search_stage").empty();
+				var stagestr = "<option value='0'>All</option>";
+				$('.search_stage').append(stagestr);
+				if (res) {
+					for (var i = 0; i < res.length; i++) {
+						stagestr = "<option value='" + res[i]['build_id'] + "'>" + res[i]['build'] + "</option>"
+						$('.search_stage').append(stagestr);
+					}
+					form.render('select')
+				}
+			}
+		})
+	});      
+
+	//监听提交
+	$(".alltask").click(function () {
+		var search_project = $('.search_project').val();
+		var search_stage = $('.search_stage').val();
+		var sel_meth = $('.sel_meth').val();
+		if(search_project==''){
+			alert("please select Project");
+			return false;
+		}
+		   
+		$.ajax({                
+			type: 'POST',                
+			url: './Chart_Data.php?search_project='+search_project+'&search_stage='+search_stage+'&sel_meth='+sel_meth,                
+			// data: data.field, 
+			dataType: 'json',               
+			success: function (res) {
+                $(".analysis_chart").html("");
+                tablestr = "<table width='98%' border='0' align='center' cellpadding='5' cellspacing='0'><tr height='620px'><td width='20%' valign='top'>" 
+                tablestr += "<table width='100%' border='1' bgcolor='#cccccc' align='center' cellpadding='2' cellspacing='2'><tr height='35'><th width='72%' bgcolor='#000000'><font color='#ffffff'>Test Station</font></th><th width='28%' bgcolor='#000000'><font color='#ffffff'>Count</font></th></tr>";
+                for(var i=0;i<res['station_name'].length;i++){
+                	// console.log(res['station_name'][i]+'  '+res['station_num'][i]);
+                	tablestr += "<tr><td bgcolor='#ffffff' style='word-break: break-all;' lay-filter='teststation'  ><a onclick='modify(this)' style='cursor: pointer'>"+res['station_name'][i]+"</a></td><td bgcolor='#ffffff'>"+res['station_num'][i]+"</td></tr>"
+                }
+                tablestr += "<tr><td colspan='2' bgcolor='#ffffff' style='word-break: break-all;'>"+res['station_total']+"</td></tr>";
+                tablestr += "</table></td><td valign='top' align='center'>";
+                tablestr +="<iframe align='top' marginwidth='0' width='98%' height='600px' frameborder='0' marginheight='0' marginwidth='0' name='show4' scrolling='yes' src='"+sel_meth+"?divid=1&search_project="+search_project+"&search_stage="+search_stage+"'></iframe>";
+
+                tablestr += "</td></tr><tr height='620px'><td width='20%' valign='top'>";
+                tablestr += "<table width='100%' border='1' bgcolor='#cccccc' align='center' cellpadding='2' cellspacing='2'><tr height='35'><th bgcolor='#000000'><font color='#ffffff'>Priority</font></th><th bgcolor='#000000'><font color='#ffffff'>Count</font></th></tr>"
+                for(var i=0;i<res['priority_name'].length;i++){
+                	// console.log(res['station_name'][i]+'  '+res['station_num'][i]);
+                	tablestr += "<tr><td bgcolor='#ffffff' style='word-break: break-all;'>"+res['priority_name'][i]+"</td><td bgcolor='#ffffff'>"+res['priority_num'][i]+"</td></tr>"
+                }
+                tablestr += "<tr><td colspan='2' bgcolor='#ffffff' style='word-break: break-all;'>"+res['priority_total']+"</td></tr>";
+                tablestr += "</table></td><td valign='top'align='center'>";
+                tablestr +="<iframe align='top' marginwidth='0' width='98%' height='600px' frameborder='0' marginheight='0' marginwidth='0' name='show4' scrolling='yes' src='"+sel_meth+"?divid=2&search_project="+search_project+"&search_stage="+search_stage+"'></iframe>";
+
+                tablestr += "</td></tr><tr height='620px'><td width='20%' valign='top'>";
+                tablestr += "<table width='100%' border='1' bgcolor='#cccccc' align='center' cellpadding='2' cellspacing='2'><tr height='35'><th bgcolor='#000000'><font color='#ffffff'>Requestor</font></th><th bgcolor='#000000'><font color='#ffffff'>Count</font></th></tr>"
+                for(var i=0;i<res['requestor_name'].length;i++){
+                	// console.log(res['station_name'][i]+'  '+res['station_num'][i]);
+                	tablestr += "<tr><td bgcolor='#ffffff' style='word-break: break-all;'>"+res['requestor_name'][i]+"</td><td bgcolor='#ffffff'>"+res['requestor_num'][i]+"</td></tr>"
+                }
+                tablestr += "<tr><td colspan='2' bgcolor='#ffffff' style='word-break: break-all;'>"+res['requestor_total']+"</td></tr>";
+                tablestr += "</table></td><td valign='top' align='center'>";
+                tablestr +="<iframe align='top' marginwidth='0' width='98%' height='600px' frameborder='0' marginheight='0' marginwidth='0' name='show4' scrolling='yes' src='"+sel_meth+"?divid=3&search_project="+search_project+"&search_stage="+search_stage+"'></iframe>";
+                tablestr += "</td></tr></table>";
+                $('.analysis_chart').append(tablestr);
+            }                            
+		});
+		return false;
+	});
+});
+function modify(obj){
+	var station_name=obj.text;
+	window.sessionStorage.setItem("station_name",station_name);
+	var url='./introduction.html?station_name='+station_name;
+	x_admin_show(station_name, url, '1000', '700');
+}
+ 
+</script>
+</body>
+</html>

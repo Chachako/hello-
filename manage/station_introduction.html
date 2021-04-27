@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+   
+    <title>Check</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <script src='../js/jquery.js'></script>
+    <!-- <script src='../layui/layui.js'></script> -->
+   <style>
+        #stationTable {
+            width: 95%;
+            margin: 0 auto;
+        }
+        
+        .list_wrap {
+
+            width: 80%;
+            margin: 0 auto;
+        }
+        .button{
+            width: 80%;
+            margin: 0 auto;
+            /* height: 38px; */
+            margin-top: 64px;
+        }
+      #content tr:hover{
+        cursor:pointer;
+      }
+      .formleft{
+            text-align: left;
+        }
+      a{
+          color: rgb(23, 185, 226);
+      }
+   </style>
+</head>
+<body>
+   
+    <div class="button">
+        <!-- <div style="float: left;"> -->
+            <form class="layui-form task_add" action="" style="float: left;width: 820px;">
+            <div class="layui-form-item">      
+                <label class="layui-form-label formleft">Product:</label>
+                    <div class="layui-input-inline" >
+                            <input type="text" name="title"  placeholder="请输入" autocomplete="off" class="layui-input product" style="margin-bottom: 15px;">
+                    </div> 
+                <label class="layui-form-label formleft">Station_name:</label>
+                    <div class="layui-input-inline" >
+                        <input type="text" name="title"  placeholder="请输入" autocomplete="off" class="layui-input station_name" style="margin-bottom: 15px;">
+                    </div> 
+                    <button class="layui-btn  query" lay-filter="query" id="query" style="margin-bottom: 15px;margin-left: 118px;">Query</button>             
+                </div>
+            </form>
+        <!-- </div> -->
+        
+            <button class="layui-btn layui-btn-nomal" style="height: 38px;margin-bottom: 15px;width: 74px; margin-left: 124px" onclick="location.href='add_introduction.html'">Add</button>
+        </div>
+    
+ 
+    <div class="x-body" style="margin-top: 10px;">
+        <div class='list_wrap'>
+            <table style="margin-left:300px;" id="stationTable" lay-filter="station"></table>
+            <div id="demo"></div>
+        </div>
+
+    </div>
+    <script type="text/html" id="barDemo">
+          
+       
+        <a class="layui-btn layui-btn-xs" lay-event="edit" id="btn1" >Edit</a>
+        <a class="layui-btn layui-btn-xs" lay-event="delete" style='background:red;' id="btn2"  >Delete</a>
+        <a class="layui-btn layui-btn-xs" lay-event="sort" style='background:black;' id="btn3"  >Sort</a>
+    
+    </script>
+
+    <script src='../js/jquery.js'></script>
+    <!-- <script src='../layui/layui.js'></script> -->
+    <script src='../manage/filter/layui/layui1.js'></script>
+ 
+<script  type="text/javascript">
+       layui.use(['element', 'upload', 'form', 'jquery', 'table', 'layer'], function() {
+    var $ = layui.jquery;
+    var element = layui.element;
+    var upload = layui.upload;
+    var layer = layui.layer;
+    var table = layui.table;
+    var form = layui.form;
+    //表格渲染
+
+    table.render({
+        elem: '#stationTable',
+        url: '../admin/user_handle.php?action=station_list', //数据接口,
+        id: 'stationTable',
+        height: 'auto',
+        align: 'right',
+        loading: true,
+        page: true,
+        limit: 10,
+        limits: [10, 30, 50,100,200],
+        cols: [
+            [ //表头
+                { field: 'no', width: 100, align: 'center', title: 'No.', sort: true, fixed: 'left', type: 'numbers' },
+                { field: 'product', align: 'center', title: 'Product',  width: 120},
+                { field: 'station_name', align: 'center', title: 'Station_name', templet: '#station_name' , width: 200,sort: true},
+                { field: 'head', align: 'center', title: 'Head', templet: '#head' , width: 300  ,sort:true},
+                { field: 'content', align: 'center', title: 'Content', templet: '#content' , width: 600},
+                { fixed: 'right', align: 'center', title: 'Action', toolbar: '#barDemo'}
+
+            ]
+        ]
+    });
+    
+    table.on('tool(station)', function(obj) {
+        var data = obj.data;
+        var layEvent = obj.event;
+        // console.log(data)
+        if (layEvent === 'edit'){
+            var id=data.id;
+            window.location.href="edit_introduction.html?id="+id;
+        }else if(layEvent === 'delete'){
+            var id=data.id;
+            // console.log(id)
+            layer.confirm('Are you sure?', function(index){
+                $.ajax({
+                   type: 'post',
+                   url: './manage_handle.php?action=delete',
+                   data: {
+                       id:id
+                   },
+                   cache: false,
+                   dataType: 'json',
+                   success: function(data) {
+                        if(data=="success"){
+                            alert(' Success!')
+                            layer.closeAll();
+                            window.location.href="station_introduction.html";
+                            // table.reload('stationTable', {
+                            //     url: '../admin/user_handle.php?action=station_list',
+                            //     // 设置重新从第一页开始读取
+                            //     page: {
+                            //         curr: 1
+                            //     }
+                            // })
+                        }else{                      
+                            alert('fail ');
+                            layer.closeAll();
+                        }                  
+                    }
+                });
+            });      
+        }else if(layEvent === 'sort'){
+            var station_name=data.station_name;
+            var id=data.id;
+            var product=data.product;
+            window.location.href="sort.html?station_name="+station_name+ "?id=" + id+ "?product="+ product;
+        }
+       
+
+    })
+     
+$('.query').click(function() {
+    var station_name=$('.station_name').val(); 
+    var product=$('.product').val(); 
+    table.reload('stationTable', {
+      url: './manage_handle.php?action=search_name',
+      method: 'post',
+      where: {
+        station_name: station_name,
+        product:product
+      },
+      page: {
+          curr: 1
+      }
+  })
+
+ 
+    
+ 
+  
+  return false;
+
+})
+
+          })
+          function change(e){
+            var reg=new RegExp('"',"g");
+            return e.replace(reg,'&quot;')
+        }
+</script>
+<!-- <script type="text/html" id="content">
+ 
+    <div style='text-align:left;font-size:16px; '>
+        <span title="{{change(d.content)}}" style='display:block;'>{{ d.content }}
+        </span>
+</div>
+</script> -->
+</body>
+</html>

@@ -1,0 +1,292 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>测试开发协作系统后台</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style>
+        body {
+            margin: 0px;
+            height: 0px;
+            overflow: hidden;
+        }
+        
+        .icon {
+            font-size: 16px;
+            color: white;
+            padding-right: 5px;
+        }
+        
+        #animation-left-nav {
+            position: absolute;
+            left: 0px;
+        }
+        
+        .layui-body {
+            left: 0;
+        }
+        
+        .layui-layout-admin .layui-body {
+            bottom: 10px;
+        }
+        
+        #navLeft {
+            left: 60px !important;
+        }
+        
+        #navright {
+            margin-right: 60px;
+        }
+        
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0px 1000px white inset;
+            border: 1px solid #CCC !important;
+        }
+        
+        #navLeft>li>a,
+        #navright>li>span,
+        #navright>li>a {
+            font-size: 18px !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header">
+     
+
+            <ul class="layui-nav layui-layout-left" id="navLeft">
+                <li class="layui-nav-item" id="account_list">
+                    <a href="./account_list.html" target="main">Account List</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./add_account.html" target="main">Add Account</a>
+                </li>
+                <!-- <li class="layui-nav-item">
+                    <a href="./filter/index.html" target="main">Filter</a>
+                </li> -->
+                <li class="layui-nav-item">
+                    <a href="./filter/index copy.html" target="main">Filter</a>
+                </li>
+                <!-- <li class="layui-nav-item">
+                    <a href="./filter/filter_add.html" target="main">Add Filter</a>
+                </li> -->
+                <li class="layui-nav-item">
+                    <a href="javascript:;">Add</a>
+                    <dl class="layui-nav-child">
+                        <dd id="product">
+                            <a href="./add_product.html" target="main">Add Product</a>
+                        </dd>
+                        <dd id="project">
+                            <a href="./add_project.html" target="main">Add Project</a>
+                        </dd>
+                        <dd id="Build">
+                            <a href="./add_build.html" target="main">Add Build</a>
+                        </dd>
+                        <dd id="station">
+                            <a href="./add_station.html" target="main">Add Station</a>
+                        </dd>
+                        <dd id="group">
+                            <a href="./add_group.html" target="main">Add Group</a>
+                        </dd>
+                        <dd id="station_user">
+                            <a href="./add_station_user.html" target="main">Add Station User</a>
+                        </dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./station_introduction.html" target="main">Station Introduction</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./logininfo.html" target="main">Login Info</a>
+                </li>
+
+
+
+
+            </ul>
+            <ul class="layui-nav layui-layout-right" id='navright'>
+                <li class='layui-nav-item'>
+                    <a href="javascript:;">Admin</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="../index.html">Logout</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="layui-body" style="overflow-y:hidden;">
+            <!-- 内容主体区域 -->
+            <div style="height:100%">
+                <iframe id="main" src="./account_list.html" name="main" style="overflow: visible;" scrolling="auto" frameborder="no" width="100%" height="100%" ranat="server"></iframe>
+            </div>
+        </div>
+
+    </div>
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script>
+        layui.use('element', function() {
+            var element = layui.element;
+
+            //…
+        });
+        // 根据权限设置显示内容 如果没有登录跳到登录页面
+        // var user = JSON.parse(sessionStorage.getItem('user'));
+        // var userName = user.user;
+        // var ident = user.ident;
+        // if(ident== "" || ident == null){
+        //   $('#asset').css("display", "none");
+        // }
+        // if (user === null) {
+        //   window.location.href = "index.html";
+        // } else {
+        //   $('#users').text(user.user);
+        //   if (user.flag == 2 || user.flag == 3) {
+        //     $('#equipimport').css("display", "none")
+        //     $('#equiphistory').css("display", "none")
+        //     $('#spareimport').css("display", "none");
+        //     $('#spareaccess').css("display", "none");
+        //     $('#countset').css("display", "none");
+        //     $('#summaryConfig').css("display", "none");
+        //     $('#systemEquipFlag').css("display", "none");
+        //   }
+        //   if (user.flag == 2) {
+        //     $('#systemUser').css("display", "none");
+        //     $('#systemUse').css("display", "none");
+        //     $('#systemSpare').css("display", "none");
+        //   }
+        //   if (user.flag == 3) {
+        //     $('#system').css("display", "none");
+        //     $('#import').css("display", "none");
+        //     $('#export').css("display", "none");
+        //     $('#systemSpare').css("display", "none");
+        //     $('#spareaccess').css("display", "none");
+        //   }
+        // }
+
+
+        // if (getCookie('urlNav') == null) {
+        //   document.cookie = "urlNav=" + 'count/data_count.html';
+        // }
+        // // 获取左侧菜单栏的href属性并将其存入到cookie
+        // $('#navLeft dd a').click(function () {
+        //   var urlNav = $(this).attr('href');
+        //   document.cookie = "urlNav=" + urlNav;
+        // })
+
+        // // 实现局部刷新 
+        // function refresh() {
+        //   document.getElementById('main').src = getCookie('urlNav');
+        // }
+
+        // // 获取存到cookie中的值
+        // function getCookie(c_name) {
+        //   if (document.cookie.length > 0) {
+        //     c_start = document.cookie.indexOf(c_name + "=")
+        //     if (c_start != -1) {
+        //       c_start = c_start + c_name.length + 1
+        //       c_end = document.cookie.indexOf(";", c_start)
+        //       if (c_end == -1) c_end = document.cookie.length
+        //       return unescape(document.cookie.substring(c_start, c_end))
+        //     }
+        //   }
+        //   return ""
+        // }
+
+        // //JavaScript代码区域
+        // layui.use(['element','form'], function () {
+        //   var element = layui.element;
+        //   var form = layui.form;
+        //   var layer = layui.layer;
+
+        //   // 监控提交按钮
+        //   form.on('submit(editform)', function(data){
+        //     var datas = data.field;
+        //     if(datas.pass != datas.repass){
+        //       layer.msg('密码不一致,请重新输入!',{icon: 3});
+        //     }else{
+        //       $.ajax({
+        //         url: "./admin/user/self_user_edit.php?user="+userName,
+        //         type: "post",
+        //         data: datas,
+        //         dataType: "json",
+        //         success: function(res){
+        //           if(res.code == 200){
+        //             layer.closeAll();
+        //             layer.msg('修改成功!',{icon: 1})
+        //           }else{
+        //             layer.msg('修改失败');
+        //           }
+        //         },
+        //         error: function(){
+        //           layer.msg('修改失败');
+        //         }
+        //       })
+        //     }
+        //   })
+        // });
+
+        //  // 资料修改
+        // function infoEdit(){
+        //   layer.open({
+        //     type: 1,
+        //     title: '修改密码',
+        //     area: ['400px;', '300px'],
+        //     anim: 1, //弹出动画
+        //     id: 'btn_edit',
+        //     moveType: 1,
+        //     // shade: 0.8,
+        //     content: $('#editForm')
+        //   })
+        // }
+    </script>
+</body>
+<!-- <form class="layui-form layui-form-pane" id="editForm" onsubmit="return false;" style="display:none;">
+  <div class="layui-form-item" style="margin-top:20px;">
+    <label class="layui-form-label">密码</label>
+    <div class="layui-input-inline">
+      <input type="password" id="pass" name="pass" required lay-verify="required" placeholder="密码" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">确认密码</label>
+    <div class="layui-input-inline">
+      <input type="password" id="repass" name="repass" required lay-verify="required" placeholder="id"  autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button class="layui-btn" lay-submit lay-filter="editform">提交</button>
+    </div>
+  </div>
+</form> -->
+
+</html>

@@ -1,0 +1,160 @@
+<?php 
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Account_loadingInfo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../layui/css/layui.css">
+    <style type="text/css">
+    	<style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        .detail_task_wrap {
+            /* width: 50%; */
+            margin: auto;
+            padding: 50px;
+        }
+        .detail_task{
+			padding:10px 0;
+			width:90%;
+			margin:0 auto;
+		}
+        .detail_tab td>span.detail_val{
+            margin-left: 10px;
+        }
+        .detail_title {
+        	margin-right: 40px;
+            display: inline-block;
+            width: 123px;
+            text-align: right;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+	 <div class="detail_task_wrap">
+        <!-- 初创记录-->
+        <div class="detail_task">
+        	<table class="layui-table detail_tab" lay-skin="nob">
+                <colgroup>
+                    <col width="50%">
+                    <col width="50%">
+                </colgroup>
+                <tbody>
+                    <tr>                                      
+            			<td align="right"><span class='detail_title'>Name:</span></td>
+            			<td><span class='user_name detail_val'></span></td>
+            		</tr>
+            		<tr>       
+            			<td align="right"><span class='detail_title'>Product:</span></td>
+            			<td><span class='user_product detail_val'></span></td>
+            		</tr>
+            		<tr>                                 
+            			<td align="right"><span class='detail_title'>Project:</span></td>
+            			<td><span class='user_project detail_val'></span></td>
+            		</tr>
+            		<tr>        
+            			<td align="right"><span class='detail_title'>Group:</span></td>
+            			<td><span class='user_group detail_val'></span></td>
+            		</tr>
+            		<tr>                               
+            			<td align="right"><span class='detail_title'>MobilePhone:</span></td>
+            			<td><span class='user_MP detail_val'></span></td>
+            		</tr>
+            		<tr>        
+            			<td align="right"><span class='detail_title'>ShortPhone:</span></td>
+            			<td><span class='user_SP detail_val'></span></td>
+            		</tr>
+            		<tr>                               
+            			<td align="right"><span class='detail_title'>Email:</span></td>
+            			<td><span class='user_email detail_val'></span></td>
+            		</tr>
+            		<tr>        
+            			<td align="right"><span class='detail_title'>Leader:</span></td>
+            			<td><span class='user_leader detail_val'></span></td>
+            		</tr>
+            	</tbody>
+            </table> 
+            <table style="margin-left:300px;" id="userTable" lay-filter="user"></table>                      
+        </div>
+    </div>
+    <script src='../js/jquery.js'></script>
+    <script src='../layui/layui.js'></script>
+    <script type="text/javascript">
+    	layui.use(['form', 'jquery', 'table'], function () {
+            var form = layui.form,
+            $ = layui.jquery;
+            var table = layui.table;
+
+            var user_id = window.location.search.slice(1).split('=')[1];
+            $.ajax({
+                url: 'manage_handle.php?action=user_info&user_id=' + user_id,
+                type: 'GET',
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    console.log(res);
+                    $('.user_name').html(res[0]['username'])
+                    $('.user_product').html(res[0]['product'])
+                    $('.user_project').html(res[0]['project'])
+                    $('.user_group').html(res[0]['group'])
+                    $('.user_MP').html(res[0]['long_phone'])
+                    $('.user_SP').html(res[0]['phone'])
+                    $('.user_email').html(res[0]['email'])
+                    if(res[0]['group_category'] == 1)
+                    	$('.user_leader').html('是')
+                    else if(res[0]['group_category'] == 2)
+                    	$('.user_leader').html('否')
+                }
+            })
+
+            table.render({
+		        elem: '#userTable',
+		        url: 'manage_handle.php?action=login_list&user_id=' + user_id, //数据接口,
+		        id: 'userTable',
+		        height: 'auto',
+		        align: 'right',
+		        loading: true,
+		        page: true,
+		        limit: 10,
+		        limits: [10, 30, 50,100,200],
+		        cols: [
+		            [ //表头
+		                { field: 'no', align: 'center', title: 'No.', type: 'numbers' },
+		                { field: 'user_name', align: 'center', title: 'Account'},
+		                { field: 'login_time', align: 'center', title: 'Login time'},
+		                { field: 'logout_time', align: 'center', title: 'Logout time'}
+		            ]
+		        ]
+		    });
+        })
+    </script>
+</body>
+</html>

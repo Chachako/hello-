@@ -1,0 +1,173 @@
+
+<?php
+require_once "../Include/db_connect.php";
+session_start();
+if(empty($_SESSION['cooper_user_info'])){
+if(empty($_COOKIE['cooper_username'])||empty($_COOKIE['cooper_password'])){
+header("location:../index.html");
+}else{
+$row=check_user($_COOKIE['cooper_username'],$_COOKIE['cooper_password'],$db);
+if(empty($row)){
+header("location:../index.html");
+}else{
+$_SESSION['cooper_user_info']=$row;
+}
+}
+}
+
+function check_user($username, $password, $db)
+{
+    $sql = "SELECT `id`,`username`,`email`,`phone`,`product_id`,`group_id`,`group_category`,`level` from user_list where username='$username' and password='$password' and enable = 1";
+    $userinfo = $db->query($sql);
+    return $userinfo;
+}
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>工站介绍</title>
+<link rel="stylesheet" href="../layui/css/layui.css">
+<style>
+    .all{
+        /* background-color: rgb(192, 228, 192); */
+        margin: 0 auto;
+        margin-top: 50px;
+        width: 90%;
+        
+    }
+   
+    .content{
+        margin: 0 auto;
+        width: 70%;
+        font-family: sans-serif;
+        line-height: 1.6;
+        color: #202122;
+        WORD-WRAP:break-word;
+        TABLE-LAYOUT:fixed;
+    }
+ 
+    p{
+        padding-bottom: 6px;
+        /* overflow: auto; */
+    }
+    a{
+        color: rgb(39, 154, 221);
+    }
+    /* .content .item{
+        cursor:pointer;
+    } */
+    
+    li{
+        list-style: none;
+		cursor: move;
+    }
+    li:hover {
+		background-color: #f6f6f6;
+       
+       
+	}
+
+</style>
+
+</head>
+<body>
+  <div class="all">
+     
+   
+  <div class="content">
+       
+  </div>
+
+</div>
+<script src="../js/jquery.js"></script>
+<script type="text/javascript" src="../layui/layui.js"></script>
+<!-- <script src="jquery-1.11.0.min.js" type="text/javascript"></script>
+<script src="ddsort.js"></script> -->
+<script src="../js/jquery-ui.min.js"></script>
+<script>
+
+var station_name=decodeURI (window.location.search.slice(1).split('?')[0].split('=')[1]);
+var id= window.location.search.slice(1).split('?')[1].split('=')[1];
+var product=window.location.search.slice(1).split('?')[2].split('=')[1];
+    $.ajax({
+       type:'post',
+       url:'./upload.php?action=select_name',
+       dataType:'json',
+       data:{
+        station_name:station_name,
+        product:product
+       },
+       success: function(res){
+          
+        //   console.log(res)
+        if(res==''){
+            $(".content").html("<p style='font-size:20px;text-align: center;'> No introductions!</p>");     
+        }else{
+        $(".content").html("");
+       div="";
+       
+      for(var i=0;i<res.length;i++){
+         
+          div+="<div class='moudles' >";
+          div+="<div   name='"+res[i].id+"' class='list' style='width: 100%;min-height:180px;overflow: auto;position: relative; margin-bottom: 50px;'><strong><p style='height:30px;font-family: serif;font-size: 20px;width: 100%;border-bottom: 1px solid #a2a9b1;padding-bottom: inherit;' >"+res[i].head+"</p></strong>";
+          div+="<p > "+res[i].content+"</p></div></div>" 
+         
+      }
+      $('.content').append(div);
+     
+    }
+    }
+
+    });
+
+   
+$(function() { 
+    $(".list").bind('mouseover', 
+    function() { 
+        $(this).css("cursor", "move") 
+    }); 
+ 
+    var $show = $(".all"); //进度条 
+    // var $orderlist = $("#orderlist"); 
+    var $list = $(".content"); 
+ 
+    $list.sortable({ 
+        opacity: 0.6, 
+        revert: true, 
+        cursor: 'move', 
+        handle: '.list',
+        update: function() { 
+            var c=[];
+            var a =  $('.list'); 
+            // console.log(a);
+            for(var i=0;i<document.getElementsByClassName("list").length;i++){
+                var id=document.getElementsByClassName("list")[i].getAttribute("name");
+                c.push(id+"-"+i)
+            }
+            // console.log(c);
+            $.ajax({ 
+                type: "post", 
+                url: "upload.php?action=update", 
+                dataType:"json",
+                data: { 
+                   c:c,
+                   station_name:station_name
+                }, 
+                success: function(msg) { 
+                    if(msg=="success"){
+                        // alert("success")
+                       
+                     }else{
+                         alert("fail")
+                     }
+                } 
+            }); 
+        
+    }
+}); 
+}); 
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671
+{\fonttbl\f0\froman\fcharset0 Times-Roman;\f1\fnil\fcharset0 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue255;}
+{\*\expandedcolortbl;;\csgenericrgb\c0\c0\c100000;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww19740\viewh14860\viewkind0
+\deftab720
+\pard\pardeftab720\li720\partightenfactor0
+
+\f0\fs24 \cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs20 \cf0 +Lise to double confirm the cfg list and specific cfg half with checksum but half w/o need list SN\uc0\u8232 \
+Hi Abby,\
+syscfg list will print cfg name, you can start overlay modify after Lise confirmed cfg list. thanks\
+\
+\
+
+\f0\fs24 + more \
+\
+Hi Jacky \
+\
+Per discussion of line, lets add a condition in RxCL off-line station: if the units config as below write MtDO sequence directly(without checksum)\
+Thanks for Lorne quick response, validation details in <{\field{\*\fldinst{HYPERLINK "rdar://problem/61107609"}}{\fldrslt \cf2 \ul \ulc2 rdar://problem/61107609}}> J517 P1 need a method of reading LCM SN from TCON\
+\
+Rest of config pls keep POR MtDO checksum logic and double check the key in CT2. \
+
+\f1\fs20 \
+\
+\
+
+\f0\fs24 \
+\pard\pardeftab720\li720\partightenfactor0
+\cf0 Seems our all input right now all have to test IQC. We need offline stations. \uc0\u8232 \u8232 GIS : 308x \u8232 \u8232 P18NDB-PD3\u8232 P18NEB-SOP2\u8232 P18NDB-PD4\u8232 P18NEW-SOP1\u8232 P18NCB-M1\u8232 P18NDW-M4\u8232 P18NCW-M6\u8232 P18NDW-1\u8232 P18NDW-2\u8232 P18NDW-3\u8232 P18NGB-NV1\u8232 P18NCB-NM\u8232 P18NDW-5\u8232 P17GB-SOP1\u8232 P18NDW-5a\u8232 P18NDW-4\u8232 P17GW-SOP2\u8232 \u8232 \u8232 LGD: 80 \u8232 \u8232 P18NDW-PD1\u8232 P18NDW-PD2\u8232 P18NGB-SOP3\u8232 P18NGW-SOP4\u8232 P18NEB-M2\u8232 P18NEB-M2a\u8232 P18NEW-M3\u8232 P18NFW-M5}
